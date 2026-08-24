@@ -4,7 +4,7 @@ Wrap a flat map onto a 3D globe in your browser, then export a looping GIF of it
 
 Built for worldbuilders who have a map and want to see what their world actually looks like as a planet.
 
-**[Try it in your browser](https://YOURUSERNAME.github.io/globify/)**  ·  **[Download it to keep](https://github.com/YOURUSERNAME/globify/releases/latest)**
+**[Try it in your browser](https://viruzodro.github.io/globify/)**  ·  **[Download it to keep](https://github.com/viruzodro/globify/releases/latest)**
 
 ![A world map turning as a globe](demo.gif)
 
@@ -57,7 +57,7 @@ If the save button does nothing, press and hold the preview image and choose Sav
 
 ## Running it yourself
 
-Download `globify.html` from the [latest release](https://github.com/YOURUSERNAME/globify/releases/latest) and double-click it. That's the whole install. No dependencies, no build step, no internet needed after the download.
+Download `globify.html` from the [latest release](https://github.com/viruzodro/globify/releases/latest) and double-click it. That's the whole install. No dependencies, no build step, no internet needed after the download.
 
 ## Built with
 
