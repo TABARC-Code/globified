@@ -111,7 +111,7 @@
   .row .label{display:block;margin-bottom:9px}
 
   /* source button */
-  #load{
+  #load,.buttonlike{
     width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
     padding:13px;cursor:pointer;
     border:1px dashed var(--brass-dim);
@@ -120,7 +120,7 @@
     font-family:'Spectral',serif;font-style:italic;font-size:15px;
     transition:background .18s,border-color .18s;
   }
-  #load:hover,#load.hot{background:rgba(200,155,74,.14);border-color:var(--brass)}
+  #load:hover,#load.hot,.buttonlike:hover{background:rgba(200,155,74,.14);border-color:var(--brass)}
   #load .fname{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);
     letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   input[type=file]{display:none}
@@ -138,6 +138,10 @@
   .seg button[aria-pressed=true]{background:rgba(200,155,74,.16);color:var(--brass)}
   .seg button:focus-visible{outline:2px solid var(--verdigris);outline-offset:-2px}
   .hint{margin-top:8px;font-size:12.5px;font-style:italic;color:var(--dim);line-height:1.45}
+  .advice{margin-top:9px;padding:9px 10px;border-left:2px solid var(--verdigris);background:rgba(111,162,148,.08);font-size:12.5px;line-height:1.42;color:var(--bone)}
+  .advice.warn{border-left-color:#c65a46;background:rgba(198,90,70,.10)}
+  .minirow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .minirow button{flex:1;min-width:120px}
 
   /* sliders */
   .slide{display:flex;align-items:center;gap:12px}
@@ -256,9 +260,21 @@
   <div class="row">
     <span class="label">Map sheet</span>
     <label id="load" for="file">
-      <span id="loadTxt">Choose, drop, or paste a JPG</span>
+      <span id="loadTxt">Choose, drop, or paste a map image</span>
     </label>
     <input type="file" id="file" accept="image/*">
+    <p id="mapAdvice" class="advice">Load a map and I’ll tell you whether its proportions make geographical sense. Miracles are outside scope.</p>
+  </div>
+
+  <div class="row">
+    <span class="label">Overlay layer</span>
+    <label id="overlayLoad" class="buttonlike" for="overlayFile">Add labels, borders, or clouds</label>
+    <input type="file" id="overlayFile" accept="image/*">
+    <div class="slide gap">
+      <input type="range" id="overlayOpacity" min="0" max="100" step="1" value="100" aria-label="Overlay opacity">
+      <span class="num" id="overlayOpacityNum">100%</span>
+    </div>
+    <p class="hint">The overlay uses the same projection and seam as the base map. Useful, mercifully simple.</p>
   </div>
 
   <div class="row">
@@ -281,6 +297,19 @@
   <div class="row">
     <span class="label">Drawing guide</span>
     <button id="tmpl">Download a template for these settings</button>
+  </div>
+
+  <div class="row">
+    <span class="label">Polar caps</span>
+    <div class="seg" id="caps">
+      <button data-cap="solid" aria-pressed="true">Average</button>
+      <button data-cap="edge" aria-pressed="false">Edge colour</button>
+      <button data-cap="custom" aria-pressed="false">Custom</button>
+    </div>
+    <div class="minirow" id="capColours" hidden>
+      <input type="color" id="capNorth" value="#1b2942" aria-label="North polar cap colour">
+      <input type="color" id="capSouth" value="#1b2942" aria-label="South polar cap colour">
+    </div>
   </div>
 
   <div class="row">
@@ -341,6 +370,7 @@
     <div class="toggles gap">
       <button class="tog" id="tAlpha" aria-pressed="false"><span class="dot"></span>Transparent</button>
       <button class="tog" id="tDither" aria-pressed="true"><span class="dot"></span>Dither</button>
+      <button class="tog" id="tFrame" aria-pressed="false"><span class="dot"></span>Keep framing</button>
     </div>
     <button id="gif">Export a full turn as GIF</button>
     <p class="hint" id="gifHint"></p>
@@ -348,6 +378,14 @@
 
   <div class="row">
     <button id="save" disabled>Save this view as PNG</button>
+  </div>
+
+  <div class="row">
+    <span class="label">Project settings</span>
+    <button id="saveProject">Save settings as project JSON</button>
+    <label id="loadProject" class="buttonlike" for="projectFile">Load settings project</label>
+    <input type="file" id="projectFile" accept="application/json,.json">
+    <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs.</p>
   </div>
 </div>
 
@@ -359,8 +397,8 @@
   </div>
 </div>
 
-<div id="sheet" hidden>
-  <div class="card">
+<div id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetCap">
+  <div class="card" tabindex="-1">
     <div class="label" id="sheetCap">Result</div>
     <div id="sheetPreview"></div>
     <a id="sheetDl" download target="_blank" rel="noopener">Download</a>
@@ -478,9 +516,17 @@ scene.add(stars);
 /* ---------------------------------------------------------------
    2. Texture building
 --------------------------------------------------------------- */
-var sourceImg = null;
+var sourceImg = null, overlayImg = null;
 var projection = 'equi';   // 'equi' | 'merc'
 var spanDeg = 90;          // how far from the equator the sheet reaches
+var capMode = 'solid';
+var overlayOpacity = 1;
+
+// ImageBitmap owns native resources. Browsers usually tidy up eventually, which
+// is a lovely promise until somebody drops twelve 8K maps into the same tab.
+function releaseImage(img){
+  if (img && typeof img.close === 'function') img.close();
+}
 
 function paintPlaceholder(){
   var g = tctx.createLinearGradient(0,0,0,TEX_H);
@@ -537,8 +583,7 @@ function paintMap(){
   var span = spanDeg * Math.PI/180;
 
   var caps = sampleCaps();
-  tctx.fillStyle = caps.top;    tctx.fillRect(0, 0, TEX_W, TEX_H/2);
-  tctx.fillStyle = caps.bottom; tctx.fillRect(0, TEX_H/2, TEX_W, TEX_H/2);
+  paintCaps(caps, iw, ih);
 
   tctx.imageSmoothingEnabled = true;
   tctx.imageSmoothingQuality = 'high';
@@ -559,8 +604,37 @@ function paintMap(){
     if (sh <= 0) continue;
 
     tctx.drawImage(sourceImg, 0, sy, iw, sh, 0, j, TEX_W, 1);
+    if (overlayImg){
+      var oih = imgH(overlayImg), oiw = imgW(overlayImg);
+      var osy = t0 * oih, osh = Math.max(1, (t1-t0) * oih);
+      if (osy + osh > oih) osh = oih - osy;
+      tctx.save();
+      tctx.globalAlpha = overlayOpacity;
+      if (osh > 0) tctx.drawImage(overlayImg, 0, osy, oiw, osh, 0, j, TEX_W, 1);
+      tctx.restore();
+    }
   }
   mapTex.needsUpdate = true;
+}
+
+function paintCaps(caps, iw, ih){
+  var north = caps.top, south = caps.bottom;
+  if (capMode === 'custom'){
+    north = $('capNorth').value; south = $('capSouth').value;
+    tctx.fillStyle = north; tctx.fillRect(0,0,TEX_W,TEX_H/2);
+    tctx.fillStyle = south; tctx.fillRect(0,TEX_H/2,TEX_W,TEX_H/2);
+    return;
+  }
+  if (capMode === 'edge'){
+    // Smearing an edge is not physical geography. It does, however, look less
+    // like someone poured two tins of paint over the poles.
+    var strip = Math.max(1, Math.round(ih * .06));
+    tctx.drawImage(sourceImg, 0,0,iw,strip, 0,0,TEX_W,TEX_H/2);
+    tctx.drawImage(sourceImg, 0,ih-strip,iw,strip, 0,TEX_H/2,TEX_W,TEX_H/2);
+    return;
+  }
+  tctx.fillStyle = north; tctx.fillRect(0, 0, TEX_W, TEX_H/2);
+  tctx.fillStyle = south; tctx.fillRect(0, TEX_H/2, TEX_W, TEX_H/2);
 }
 
 // The span at which this image's shapes come out undistorted, if one exists.
@@ -903,6 +977,7 @@ GifWriter.prototype.finish = function(){
 --------------------------------------------------------------- */
 var sheetURL = null;
 
+var lastFocus = null;
 function deliver(blob, filename, caption){
   if (sheetURL) URL.revokeObjectURL(sheetURL);
   sheetURL = URL.createObjectURL(blob);
@@ -920,13 +995,16 @@ function deliver(blob, filename, caption){
   dl.textContent = 'Save ' + filename;
 
   document.getElementById('sheetCap').textContent = caption;
+  lastFocus = document.activeElement;
   document.getElementById('sheet').hidden = false;
+  document.getElementById('sheetClose').focus();
 }
 
 function closeSheet(){
   document.getElementById('sheet').hidden = true;
   document.getElementById('sheetPreview').innerHTML = '';
   if (sheetURL){ URL.revokeObjectURL(sheetURL); sheetURL = null; }
+  if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
 }
 
 function showProgress(on, label, pct){
@@ -979,6 +1057,7 @@ function exportGIF(){
   var delayCs = Math.max(2, Math.round(gifSecs * 100 / N));
   var transparent = $('tAlpha').getAttribute('aria-pressed') === 'true';
   var dither = $('tDither').getAttribute('aria-pressed') === 'true';
+  var keepFraming = $('tFrame').getAttribute('aria-pressed') === 'true';
 
   var prevStars = stars.visible, prevHalo = halo.visible;
   var prevYaw = yaw, prevPR = renderer.getPixelRatio();
@@ -996,7 +1075,7 @@ function exportGIF(){
 
   function shoot(i){
     globe.rotation.set(pitch, prevYaw + (i/N) * Math.PI*2, 0);
-    system.position.set(0,0,0);
+    system.position.set(keepFraming ? panX * worldPerPixel() : 0, keepFraming ? -panY * worldPerPixel() : 0, 0);
     camera.position.z = eDist;
     renderer.render(scene, camera);
     gctx.clearRect(0,0,S,S);
@@ -1270,7 +1349,27 @@ var fileInput = $('file'), loadTxt = $('loadTxt'), loadBtn = $('load'), rSrc = $
 function imgW(i){ return i.naturalWidth || i.width || 0; }
 function imgH(i){ return i.naturalHeight || i.height || 0; }
 
-function useImage(img, name){
+function diagnoseMap(img){
+  var a = imgW(img)/imgH(img), advice = $('mapAdvice');
+  if (projection === 'equi' && Math.abs(a-2) > .025){
+    advice.className = 'advice warn';
+    advice.textContent = 'This is ' + a.toFixed(2) + ':1, not the 2:1 a full equirectangular world needs. I can still wrap it, but that is geometry doing its best with bad paperwork. Use Mercator, or crop/pad it to 2:1.';
+  } else if (projection === 'merc'){
+    advice.className = 'advice';
+    advice.textContent = 'Mercator reading: this sheet naturally reaches about ±' + idealSpan().toFixed(1) + '°. The remaining polar caps use your chosen treatment.';
+  } else {
+    advice.className = 'advice';
+    advice.textContent = 'Good: this is close enough to a full 2:1 equirectangular map. The seam is now the only unavoidable betrayal.';
+  }
+}
+
+function useImage(img, name, isOverlay){
+  if (isOverlay){
+    releaseImage(overlayImg); overlayImg = img;
+    $('overlayLoad').textContent = 'Overlay: ' + name;
+    paintMap(); return;
+  }
+  releaseImage(sourceImg);
   sourceImg = img;
   $('save').disabled = false;
   loadTxt.innerHTML = '<span class="fname">' + escapeHtml(name) + '</span>';
@@ -1278,6 +1377,7 @@ function useImage(img, name){
   applyIdealSpan();
   paintMap();
   updateHint();
+  diagnoseMap(img);
 }
 
 function say(msg){ loadTxt.textContent = msg; }
@@ -1309,20 +1409,15 @@ function viaBlobURL(f){
   return new Promise(function(res, rej){
     var url = URL.createObjectURL(f);
     var img = new Image();
-    img.onload = function(){ res(img); };
+    img.onload = function(){ URL.revokeObjectURL(url); res(img); };
     img.onerror = function(){ URL.revokeObjectURL(url); rej('blob URL blocked'); };
     img.src = url;
   });
 }
 
-function acceptFile(f){
+function acceptFile(f, isOverlay){
   if (!f){ say('No file came through. Choose it again.'); return; }
   var name = f.name || 'pasted image';
-
-  if (/heic|heif/i.test(name) || /heic|heif/i.test(f.type || '')){
-    say('No browser decodes HEIC. Export it as JPG first.');
-    return;
-  }
 
   say('Reading ' + name + '…');
 
@@ -1336,10 +1431,10 @@ function acceptFile(f){
     })
     .then(function(img){
       if (!imgW(img) || !imgH(img)) throw 'decoded to zero size';
-      useImage(img, name);
+      useImage(img, name, isOverlay);
     })
     .catch(function(why){
-      say('Could not decode ' + name + ' (' + why + '). Re-save it as a baseline JPG or PNG.');
+      say('Could not decode ' + name + ' (' + why + '). This browser may not support that format; JPG, PNG, WebP, or AVIF are safer bets.');
     });
 }
 
@@ -1359,7 +1454,8 @@ function escapeHtml(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
-fileInput.addEventListener('change', function(e){ acceptFile(e.target.files[0]); });
+fileInput.addEventListener('change', function(e){ acceptFile(e.target.files[0], false); });
+$('overlayFile').addEventListener('change', function(e){ acceptFile(e.target.files[0], true); });
 
 ['dragenter','dragover'].forEach(function(t){
   window.addEventListener(t, function(e){ e.preventDefault(); loadBtn.classList.add('hot'); });
@@ -1368,7 +1464,7 @@ fileInput.addEventListener('change', function(e){ acceptFile(e.target.files[0]);
   window.addEventListener(t, function(e){ e.preventDefault(); loadBtn.classList.remove('hot'); });
 });
 window.addEventListener('drop', function(e){
-  if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0]);
+  if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], false);
 });
 
 // projection + span
@@ -1382,6 +1478,19 @@ function setSpan(v){
   $('spanNum').textContent = '±' + spanDeg + '°';
 }
 
+segPick('caps', 'cap', function(v){
+  capMode = v;
+  $('capColours').hidden = v !== 'custom';
+  paintMap();
+});
+$('capNorth').addEventListener('input', paintMap);
+$('capSouth').addEventListener('input', paintMap);
+$('overlayOpacity').addEventListener('input', function(){
+  overlayOpacity = +this.value / 100;
+  $('overlayOpacityNum').textContent = this.value + '%';
+  paintMap();
+});
+
 function applyIdealSpan(){
   setSpan(Math.min(90, idealSpan()));
 }
@@ -1393,7 +1502,7 @@ $('proj').addEventListener('click', function(e){
     x.setAttribute('aria-pressed', String(x === b));
   });
   applyIdealSpan();
-  paintMap(); updateHint();
+  paintMap(); updateHint(); if (sourceImg) diagnoseMap(sourceImg);
 });
 
 $('span').addEventListener('input', function(){
@@ -1478,6 +1587,53 @@ tog('tDither', function(){});
 
 $('center').addEventListener('click', recenter);
 
+// Settings only. Packing user artwork into JSON would be technically possible
+// and a fairly efficient way of making a harmless file grotesquely huge.
+function toggleState(id){ return $(id).getAttribute('aria-pressed') === 'true'; }
+function setToggle(id, on){
+  var b = $(id);
+  if (toggleState(id) !== !!on) b.click();
+}
+function projectState(){
+  return {version:2, projection:projection, spanDeg:spanDeg, seam:+$('seam').value,
+    tilt:+$('tilt').value, spin:+$('spin').value, capMode:capMode,
+    capNorth:$('capNorth').value, capSouth:$('capSouth').value,
+    overlayOpacity:+$('overlayOpacity').value, gifSize:gifSize, gifFrames:gifFrames,
+    gifSecs:gifSecs, toggles:{graticule:toggleState('tGrat'), sunlight:toggleState('tSun'),
+      stars:toggleState('tStars'), atmosphere:toggleState('tAtmo'), transparent:toggleState('tAlpha'),
+      dither:toggleState('tDither'), keepFraming:toggleState('tFrame')}};
+}
+function applyProject(s){
+  if (!s || s.version !== 2) throw new Error('That is not a Globify v2 settings project.');
+  if (s.projection !== 'equi' && s.projection !== 'merc') throw new Error('Unknown map projection.');
+  projection = s.projection; setSpan(s.spanDeg);
+  Array.prototype.forEach.call($('proj').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.proj === projection)); });
+  $('seam').value = s.seam || 0; $('seam').dispatchEvent(new Event('input'));
+  $('tilt').value = s.tilt == null ? 23.5 : s.tilt; $('tilt').dispatchEvent(new Event('input'));
+  $('spin').value = s.spin == null ? 30 : s.spin; $('spin').dispatchEvent(new Event('input'));
+  capMode = s.capMode || 'solid'; $('capNorth').value = s.capNorth || '#1b2942'; $('capSouth').value = s.capSouth || '#1b2942';
+  Array.prototype.forEach.call($('caps').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.cap === capMode)); });
+  $('capColours').hidden = capMode !== 'custom';
+  $('overlayOpacity').value = s.overlayOpacity == null ? 100 : s.overlayOpacity; $('overlayOpacity').dispatchEvent(new Event('input'));
+  gifSize = s.gifSize || gifSize; gifFrames = s.gifFrames || gifFrames; gifSecs = s.gifSecs || gifSecs;
+  Array.prototype.forEach.call($('gifSize').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.s === gifSize)); });
+  Array.prototype.forEach.call($('gifFrames').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.f === gifFrames)); });
+  $('gifSecs').value = gifSecs; $('gifSecs').dispatchEvent(new Event('input'));
+  var t = s.toggles || {};
+  setToggle('tGrat', t.graticule); setToggle('tSun', t.sunlight); setToggle('tStars', t.stars);
+  setToggle('tAtmo', t.atmosphere); setToggle('tAlpha', t.transparent); setToggle('tDither', t.dither);
+  setToggle('tFrame', t.keepFraming);
+  paintMap(); if (sourceImg) diagnoseMap(sourceImg);
+}
+$('saveProject').addEventListener('click', function(){
+  deliver(new Blob([JSON.stringify(projectState(), null, 2)], {type:'application/json'}), 'globify-project.json', 'Globify settings project');
+});
+$('projectFile').addEventListener('change', function(e){
+  var f = e.target.files[0]; if (!f) return;
+  f.text().then(function(t){ applyProject(JSON.parse(t)); say('Project settings loaded. Add the map image again; browsers will not quietly keep it.'); })
+    .catch(function(err){ say('Could not load project: ' + err.message); });
+});
+
 // save
 $('save').addEventListener('click', function(){
   renderer.render(scene, camera);
@@ -1493,6 +1649,7 @@ document.getElementById('sheet').addEventListener('click', function(e){
 
 // keyboard nudge
 window.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && !document.getElementById('sheet').hidden){ closeSheet(); return; }
   var step = 0.06;
   if (e.key === 'ArrowLeft')  { yaw -= step; vYaw = 0; }
   if (e.key === 'ArrowRight') { yaw += step; vYaw = 0; }
