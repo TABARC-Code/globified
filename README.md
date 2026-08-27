@@ -1,6 +1,6 @@
 # Globify v2
 
-Globify wraps a flat world map around a 3D globe, entirely in the browser. Add a base map, put labels or borders on an overlay, spin it about, and export a still or a looping GIF. No account. No upload. No little data siphon hiding in the flowerbed.
+Globify wraps a flat world map around a 3D globe, entirely in the browser. Add a base map, put labels or borders on an overlay, spin it about, and export a still or a looping GIF. No account. No upload. No little data siphon hiding.
 
 Open `index.html` directly. It works offline.
 
@@ -23,7 +23,7 @@ A complete equirectangular planet is **2:1**: twice as wide as it is high. It re
 
 ### Mercator
 
-Mercator maps stretch the high latitudes. That is their job. A 16:9 Mercator sheet naturally covers about ±70.6° and leaves polar territory to the cap setting. The globe is not repairing the source map. It is interpreting it correctly.
+Mercator maps stretch the high latitudes. Thats their job. A 16:9 Mercator sheet naturally covers about ±70.6° and leaves polar territory to the cap setting. The globe is not repairing the source map. It's interpreting it correctly.
 
 ## Controls
 
@@ -43,9 +43,9 @@ This is intentionally one overlay, not a premature GIS workstation. More layers 
 
 ## Export notes
 
-GIF is old, limited to 256 colours, and still rather useful. Dither hides banding at the cost of size. A shared palette is built across the entire rotation, preventing the shimmer that makes so many GIFs look as though their continents are having a mild panic attack.
+ok so GIF is old, limited to 256 colours, and still rather useful. Dither hides banding at the cost of size. A shared palette is built across the entire rotation, preventing the shimmer that makes so many GIFs look as though their continents are having a mild panic attack.
 
-Transparent GIF disables the starfield and atmosphere halo because GIF transparency has the emotional range of a light switch.
+Transparent GIF disables the starfield and atmosphere halo because GIF transparency has the emotional range of a light switch. Don't at me on this it's true. I am thinking of ways to work around the matter.
 
 ## Project settings
 
@@ -53,7 +53,7 @@ Transparent GIF disables the starfield and atmosphere halo because GIF transpare
 
 ## Future ideas, considered rather than promised
 
-The next sensible tier would be:
+The next sensible tier would be: When I get free time, or the original does it. (do check them out.)
 
 - seam assistant, comparing the map edges and suggesting quiet oceans or regions where the mismatch is least visible;
 - crop and pad tools for repairing near-equirectangular maps without leaving the app;
@@ -64,8 +64,10 @@ The next sensible tier would be:
 - a modular source build that generates the portable single HTML release;
 - a controlled upgrade from the embedded Three.js r128 renderer.
 
-The last two matter. The current single-file approach is excellent for users, but not a brilliant place to perform surgery. Maintain source modules, test them, then produce `index.html` as the offline artefact.
+The last two matters. The current single-file approach is excellent for users, but not a brilliant place to perform surgery. Maintain source modules, test them, then produce `index.html` as the offline artefact. it's a thought.
 
+, Notes
+it was late when I wrote this. mistakes are mine
 ## Licence
 
 MIT. Three.js is MIT. Spectral and IBM Plex Mono are licensed under SIL Open Font License 1.1.
