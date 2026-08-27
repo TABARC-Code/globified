@@ -1,68 +1,71 @@
-# Globify
+# Globify v2
 
-Wrap a flat map onto a 3D globe in your browser, then export a looping GIF of it turning.
+Globify wraps a flat world map around a 3D globe, entirely in the browser. Add a base map, put labels or borders on an overlay, spin it about, and export a still or a looping GIF. No account. No upload. No little data siphon hiding in the flowerbed.
 
-Built for worldbuilders who have a map and want to see what their world actually looks like as a planet.
+Open `index.html` directly. It works offline.
 
-**[Try it in your browser](https://viruzodro.github.io/globify/)**  ·  **[Download it to keep](https://github.com/viruzodro/globify/releases/latest)**
+## What changed
 
-![A world map turning as a globe](demo.gif)
+- Checks map proportions and explains when an equirectangular sheet cannot honestly be a full world.
+- Accepts modern browser-decodable image formats instead of rejecting HEIC by superstition before trying.
+- Adds one transparent overlay layer for labels, borders, clouds, political divisions, or whatever is currently keeping the lore coherent.
+- Adds average, edge-smear, and custom-colour polar caps.
+- Adds project settings JSON. This stores settings, not artwork: browsers should not quietly bundle private maps into random data files.
+- Lets GIF export retain the current framing rather than always snapping back to the central showroom pose.
+- Releases Blob URLs and old `ImageBitmap` resources when maps are replaced.
+- Improves preview-dialog keyboard behaviour: focus goes to Close, and Escape closes it.
 
-## What it does
+## Projection, briefly
 
-- Drop in a JPG or PNG and see it wrapped on a sphere immediately
-- Reads your map as either **equirectangular** or **Mercator**, which is what determines whether your continents keep their shapes
-- Adjustable latitude span, so your art can stop short of the poles instead of pinching to a point
-- Movable prime meridian for hiding the seam behind an ocean
-- Axial tilt, spin rate, graticule overlay, sunlight shading, starfield, atmosphere halo
-- Downloadable drawing templates with distortion marks, sized for whatever projection you pick
-- Exports a still PNG or a seamless looping GIF of a full 360° turn
+### Equirectangular
 
-## Nothing is uploaded
+A complete equirectangular planet is **2:1**: twice as wide as it is high. It represents 360° longitude across the width and 180° latitude down the height. Anything else is either a partial-latitude sheet, a crop, or a map telling fibs through its aspect ratio.
 
-Your map never leaves your computer. There is no server, no account, no analytics. The page reads the file locally and does all rendering and encoding in your browser.
+### Mercator
 
-## Works offline
-
-`index.html` is completely self-contained. Three.js and both typefaces are embedded in the file. Download it, open it, and it works with your wifi off, forever.
-
-## What aspect ratio should my map be?
-
-For **equirectangular**, exactly 2:1. Width must be double the height, because the projection spreads the full width across 360° of longitude and the full height across 180° of latitude. Good sizes are 2048×1024 or 4096×2048.
-
-For **Mercator**, any aspect ratio works. A 16:9 map covers about ±70.6° of latitude, and the poles above and below get filled with a cap color sampled from your map's edges.
-
-If your flat map looks correct to your eye, it is probably closer to Mercator than equirectangular. A true equirectangular map has to be drawn pre-stretched, with the polar regions smeared absurdly wide, so that the stretching cancels out once it wraps. That is why Antarctica looks enormous on a world map.
-
-Use the **Download template** button to get a guide sheet at the right dimensions. Every circle on it becomes a true circle on the globe, so round marks mean your shapes will survive.
-
-One more thing: make the left and right edges of your map match, since they meet at the seam.
+Mercator maps stretch the high latitudes. That is their job. A 16:9 Mercator sheet naturally covers about ±70.6° and leaves polar territory to the cap setting. The globe is not repairing the source map. It is interpreting it correctly.
 
 ## Controls
 
-| Action | Mouse | Touch |
-|---|---|---|
-| Spin the globe | Drag | Drag |
-| Move the globe | Shift-drag or right-drag | Two-finger drag |
-| Zoom | Scroll | Pinch |
-| Re-center | Double-click | The Center button |
+| Action | Mouse / touch | Keyboard |
+| --- | --- | --- |
+| Rotate | Drag | Arrow keys |
+| Pan | Shift-drag, right-drag, or two-finger drag | Centre button |
+| Zoom | Scroll or pinch | — |
+| Re-centre | Double-click | Centre button |
+| Close an export preview | Click Close | Escape |
 
-## GIF export notes
+## Layers
 
-- **Transparent** removes the background so the globe can sit on any page. It turns off the starfield and halo, because GIF transparency is strictly on or off per pixel and soft glows come out with ragged edges.
-- **Dither** hides color banding in the shading. GIF holds only 256 colors, so smooth gradients would otherwise break into stripes. Costs roughly double the file size.
-- A single palette is built across the whole rotation rather than per frame, which is what keeps the loop from shimmering.
+The base map determines colour and polar caps. The overlay is composited over it using the same projection, latitude span, and prime meridian. It should therefore be made to the same dimensions as the base sheet. Transparent PNGs are ideal for labels and borders.
 
-If the save button does nothing, press and hold the preview image and choose Save image. Some browsers block downloads from embedded frames.
+This is intentionally one overlay, not a premature GIS workstation. More layers need sensible ordering, blend modes, layer-specific seams, project references, and a less chaotic interface. Those are future work, not a checkbox parade.
 
-## Running it yourself
+## Export notes
 
-Download `globify.html` from the [latest release](https://github.com/viruzodro/globify/releases/latest) and double-click it. That's the whole install. No dependencies, no build step, no internet needed after the download.
+GIF is old, limited to 256 colours, and still rather useful. Dither hides banding at the cost of size. A shared palette is built across the entire rotation, preventing the shimmer that makes so many GIFs look as though their continents are having a mild panic attack.
 
-## Built with
+Transparent GIF disables the starfield and atmosphere halo because GIF transparency has the emotional range of a light switch.
 
-[Three.js](https://threejs.org) (MIT). Typefaces are [Spectral](https://fonts.google.com/specimen/Spectral) and [IBM Plex Mono](https://fonts.google.com/specimen/IBM+Plex+Mono), both SIL Open Font License 1.1. The GIF encoder is written from scratch in this file: median-cut quantization, Floyd-Steinberg dithering, and LZW compression, with no dependencies.
+## Project settings
 
-## License
+**Save settings as project JSON** preserves projection, cap treatment, view settings, display toggles, and GIF choices. It intentionally does not include source images. Reload the maps after loading the project.
 
-MIT. See [LICENSE](LICENSE).
+## Future ideas, considered rather than promised
+
+The next sensible tier would be:
+
+- seam assistant, comparing the map edges and suggesting quiet oceans or regions where the mismatch is least visible;
+- crop and pad tools for repairing near-equirectangular maps without leaving the app;
+- several named layers with opacity, order, and blend modes;
+- a real polar extension method, such as mirrored terrain or painted polar continuation, rather than increasingly elaborate excuses;
+- APNG, PNG sequence, and WebM export where the browser can encode them reliably;
+- saved project references using the File System Access API as an optional convenience, never a requirement;
+- a modular source build that generates the portable single HTML release;
+- a controlled upgrade from the embedded Three.js r128 renderer.
+
+The last two matter. The current single-file approach is excellent for users, but not a brilliant place to perform surgery. Maintain source modules, test them, then produce `index.html` as the offline artefact.
+
+## Licence
+
+MIT. Three.js is MIT. Spectral and IBM Plex Mono are licensed under SIL Open Font License 1.1.
