@@ -1238,9 +1238,15 @@ function beginCapture(S, transparent){
   };
 }
 
+// Exports wait for a base map, same as the PNG button always did. Spinning the
+// placeholder grid into a 4 MB GIF helps nobody.
 function setExportButtons(busy){
-  $('gif').disabled = busy;
-  $('video').disabled = busy || !videoType;
+  var none = !rawBase;
+  $('gif').disabled = busy || none;
+  $('video').disabled = busy || none || !videoType;
+  $('save').disabled = none;
+  if (none) $('gifHint').textContent = 'Load a map first. The exports need something to spin.';
+  else if ($('gifHint').textContent.indexOf('Load a map first') === 0) $('gifHint').textContent = '';
 }
 
 function exportGIF(){
@@ -1756,7 +1762,7 @@ function useImage(img, name, layerKind){
   releaseImage(rawBase);
   rawBase = img;
   rawBaseName = String(name).replace(/\.[^.]+$/, '') || 'map';
-  $('save').disabled = false;
+  setExportButtons(exporting);
   loadTxt.innerHTML = '<span class="fname">' + escapeHtml(name) + '</span>';
   rebuildSheets(true);
 }
@@ -1953,6 +1959,7 @@ $('gifSecs').addEventListener('input', function(){
 });
 $('gif').addEventListener('click', exportGIF);
 $('video').addEventListener('click', exportVideo);
+setExportButtons(false);
 if (!videoType){
   $('video').disabled = true;
   $('video').title = 'This browser has no MediaRecorder video support. GIF still works.';
