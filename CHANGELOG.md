@@ -4,6 +4,15 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part four: a way out, and a cheat sheet
+
+### New
+
+- **Cancel exports.** The progress card has a **Cancel** button, and Escape does the same. A GIF stops at its next frame. A video stops its recorder. Either way the view goes back to how it was and nothing gets saved. Before this, a 640 px, 90-frame GIF started by accident meant sitting through it or reloading the page and losing your layers. Not ideal.
+- **Controls and shortcuts.** Press `?`, or use the button under **View**, for a short list of every mouse, touch and keyboard control. Escape, **Close** or a click outside shuts it, and focus goes back where it was. It ignores `?` while you're typing in a control, so it doesn't pop up mid-edit.
+
+It's eight lines long on purpose. If the controls ever need a scrolling help page, the controls are the problem, not the help.
+
 ## October 2026, part three: small things that get in the way
 
 A day of actually using it, not adding to it. Every item here is small. Together they make the thing a lot less irritating.
