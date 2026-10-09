@@ -193,15 +193,15 @@
   .tog:focus-visible{outline:2px solid var(--verdigris);outline-offset:-2px}
 
   /* ---------- overlays ---------- */
-  #prog,#sheet{
+  #prog,#sheet,#help{
     position:fixed;inset:0;z-index:20;
     display:flex;align-items:center;justify-content:center;
     background:rgba(12,18,32,.93);
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     padding:24px;overflow-y:auto;
   }
-  #prog[hidden],#sheet[hidden]{display:none}
-  #prog .card,#sheet .card{
+  #prog[hidden],#sheet[hidden],#help[hidden]{display:none}
+  #prog .card,#sheet .card,#help .card{
     width:100%;max-width:420px;
     border:1px solid var(--rule);background:var(--panel);
     padding:20px;
@@ -220,13 +220,18 @@
     padding:13px;background:var(--brass);color:var(--void);
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   }
-  #sheetClose,#progCancel{
+  #sheetClose,#progCancel,#helpClose{
     width:100%;margin-top:10px;padding:11px;cursor:pointer;
     background:none;border:1px solid var(--rule);color:var(--dim);
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   }
   #sheet .hint{margin:10px 0 14px}
-  #progCancel:hover{border-color:var(--brass);color:var(--bone)}
+  #help dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;margin:14px 0 4px;
+    font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-size:14px;line-height:1.35;color:var(--bone)}
+  #help dt{color:var(--brass);font-weight:700}
+  #help dd{margin:0;color:var(--dim)}
+  #help kbd{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--rule);padding:0 5px}
+  #helpClose:hover,#progCancel:hover{border-color:var(--brass);color:var(--bone)}
 
   .seg.two{grid-template-columns:repeat(2,1fr)}
   .gap{margin-top:9px}
@@ -400,6 +405,7 @@
   <div class="row">
     <span class="label">View</span>
     <button id="center">Centre the globe</button>
+    <button class="action" id="helpOpen">Controls and shortcuts (?)</button>
   </div>
 
   <div class="row">
@@ -459,6 +465,23 @@
     <div id="progBar"><i id="progFill"></i></div>
     <div class="pct" id="progPct">0%</div>
     <button id="progCancel">Cancel (Esc)</button>
+  </div>
+</div>
+
+<div id="help" hidden role="dialog" aria-modal="true" aria-labelledby="helpCap">
+  <div class="card" tabindex="-1">
+    <div class="label" id="helpCap">Controls and shortcuts</div>
+    <dl>
+      <dt>Rotate</dt><dd>Drag the globe, or the arrow keys</dd>
+      <dt>Pan</dt><dd>Shift-drag, right-drag, or two-finger drag</dd>
+      <dt>Zoom</dt><dd>Mouse wheel, or pinch</dd>
+      <dt>Re-centre</dt><dd>Double-click the globe, or Centre the globe</dd>
+      <dt>Base map</dt><dd>Choose it, drop it anywhere, or paste it</dd>
+      <dt>Layer or moon</dt><dd>Its button, or drop the file onto that button</dd>
+      <dt>Cancel export</dt><dd><kbd>Esc</kbd> while it runs</dd>
+      <dt>This list</dt><dd><kbd>?</kbd> to open, <kbd>Esc</kbd> to close</dd>
+    </dl>
+    <button id="helpClose">Close</button>
   </div>
 </div>
 
@@ -2180,6 +2203,21 @@ $('save').addEventListener('click', function(){
 
 $('sheetClose').addEventListener('click', closeSheet);
 $('progCancel').addEventListener('click', requestCancel);
+
+// Help overlay. Short on purpose: if it needs scrolling, the controls are wrong.
+var helpFocus = null;
+function openHelp(){
+  helpFocus = document.activeElement;
+  $('help').hidden = false;
+  $('helpClose').focus();
+}
+function closeHelp(){
+  $('help').hidden = true;
+  if (helpFocus && typeof helpFocus.focus === 'function') helpFocus.focus();
+}
+$('helpOpen').addEventListener('click', openHelp);
+$('helpClose').addEventListener('click', closeHelp);
+$('help').addEventListener('click', function(e){ if (e.target === this) closeHelp(); });
 document.getElementById('sheet').addEventListener('click', function(e){
   if (e.target === this) closeSheet();
 });
@@ -2188,11 +2226,14 @@ document.getElementById('sheet').addEventListener('click', function(e){
 window.addEventListener('keydown', function(e){
   if (e.key === 'Escape' && exporting){ requestCancel(); return; }
   if (e.key === 'Escape' && !document.getElementById('sheet').hidden){ closeSheet(); return; }
+  if (e.key === 'Escape' && !$('help').hidden){ closeHelp(); return; }
   // Arrow keys on a focused slider used to move the slider AND spin the planet.
   // Two things for the price of one, neither of them wanted.
   var t = e.target, tag = t && t.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
-  if (!document.getElementById('sheet').hidden) return;
+  if (!document.getElementById('sheet').hidden || exporting) return;
+  if (e.key === '?'){ if ($('help').hidden) openHelp(); else closeHelp(); return; }
+  if (!$('help').hidden) return;
   var step = 0.06;
   if (e.key === 'ArrowLeft')  { yaw -= step; vYaw = 0; }
   if (e.key === 'ArrowRight') { yaw += step; vYaw = 0; }
