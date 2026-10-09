@@ -303,6 +303,49 @@
   </div>
 
   <div class="row">
+    <span class="label">Read the sheet as</span>
+    <div class="seg two" id="proj">
+      <button data-proj="equi" aria-pressed="true">Equirectangular</button>
+      <button data-proj="merc" aria-pressed="false">Mercator</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Latitude span</span>
+    <div class="slide">
+      <input type="range" id="span" min="20" max="90" step="1" value="90" aria-label="Latitude span">
+      <span class="num" id="spanNum">±90°</span>
+    </div>
+    <button id="ideal">Use the undistorted span</button>
+  </div>
+
+  <div class="row">
+    <span class="label">Polar caps</span>
+    <div class="seg" id="caps">
+      <button data-cap="solid" aria-pressed="true">Average</button>
+      <button data-cap="edge" aria-pressed="false">Edge colour</button>
+      <button data-cap="custom" aria-pressed="false">Custom</button>
+    </div>
+    <div class="minirow" id="capColours" hidden>
+      <input type="color" id="capNorth" value="#1b2942" aria-label="North polar cap colour">
+      <input type="color" id="capSouth" value="#1b2942" aria-label="South polar cap colour">
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Prime meridian</span>
+    <div class="slide">
+      <input type="range" id="seam" min="-180" max="180" step="1" value="0" aria-label="Prime meridian">
+      <span class="num" id="seamNum">0°</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Drawing guide</span>
+    <button id="tmpl">Download a template for these settings</button>
+  </div>
+
+  <div class="row">
     <span class="label">Map layers</span>
     <div id="layers">
       <div class="layer"><div class="layer-title"><span class="label">Labels</span></div><label class="buttonlike" id="load-labels" for="file-labels">Add labels</label><input type="file" id="file-labels" accept="image/*"><div class="slide"><input type="range" id="opacity-labels" min="0" max="100" value="100" aria-label="Labels opacity"><span class="num">100%</span></div></div>
@@ -325,49 +368,6 @@
     <div class="slide"><input type="range" id="moonOrbit" min="0" max="360" value="42" aria-label="Moon orbit position"><span class="num" id="moonOrbitNum">42°</span></div>
     <div class="slide"><input type="range" id="moonTilt" min="-60" max="60" value="18" aria-label="Moon orbit tilt"><span class="num" id="moonTiltNum">18°</span></div>
     <p class="hint">One proper moon, with its own wrapped map. It is posed on an orbit rather than numerically simulated. Kepler can have the next release.</p>
-  </div>
-
-  <div class="row">
-    <span class="label">Read the sheet as</span>
-    <div class="seg two" id="proj">
-      <button data-proj="equi" aria-pressed="true">Equirectangular</button>
-      <button data-proj="merc" aria-pressed="false">Mercator</button>
-    </div>
-  </div>
-
-  <div class="row">
-    <span class="label">Latitude span</span>
-    <div class="slide">
-      <input type="range" id="span" min="20" max="90" step="1" value="90" aria-label="Latitude span">
-      <span class="num" id="spanNum">±90°</span>
-    </div>
-    <button id="ideal">Use the undistorted span</button>
-  </div>
-
-  <div class="row">
-    <span class="label">Drawing guide</span>
-    <button id="tmpl">Download a template for these settings</button>
-  </div>
-
-  <div class="row">
-    <span class="label">Polar caps</span>
-    <div class="seg" id="caps">
-      <button data-cap="solid" aria-pressed="true">Average</button>
-      <button data-cap="edge" aria-pressed="false">Edge colour</button>
-      <button data-cap="custom" aria-pressed="false">Custom</button>
-    </div>
-    <div class="minirow" id="capColours" hidden>
-      <input type="color" id="capNorth" value="#1b2942" aria-label="North polar cap colour">
-      <input type="color" id="capSouth" value="#1b2942" aria-label="South polar cap colour">
-    </div>
-  </div>
-
-  <div class="row">
-    <span class="label">Prime meridian</span>
-    <div class="slide">
-      <input type="range" id="seam" min="-180" max="180" step="1" value="0" aria-label="Prime meridian">
-      <span class="num" id="seamNum">0°</span>
-    </div>
   </div>
 
   <div class="row">
@@ -413,6 +413,10 @@
   </div>
 
   <div class="row">
+    <button id="save" disabled>Save this view as PNG</button>
+  </div>
+
+  <div class="row">
     <span class="label">Animated turn</span>
     <div class="seg" id="gifSize">
       <button data-s="320" aria-pressed="false">320 px</button>
@@ -437,10 +441,6 @@
     <button id="video">Export a full turn as video</button>
     <p class="hint" id="gifHint"></p>
     <p class="hint">Video uses the same size and seconds per turn, at 30 fps, and records in real time. Keep the tab in front while it runs. No transparency; that is still GIF's one party trick.</p>
-  </div>
-
-  <div class="row">
-    <button id="save" disabled>Save this view as PNG</button>
   </div>
 
   <div class="row">
