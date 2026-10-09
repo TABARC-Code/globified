@@ -4,6 +4,24 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part three: small things that get in the way
+
+A day of actually using it, not adding to it. Every item here is small. Together they make the thing a lot less irritating.
+
+### Better
+
+- **Fits on a phone.** The camera distance was fixed for a landscape screen, so on a phone held upright you only ever saw the middle of the planet. It now pulls back until the globe fits. Desktop is unchanged. Zoom yourself and it leaves you alone. Exports ignore the auto-fit, since their frame is square.
+- **Panel in working order.** Map sheet and how it's read come first, then layers and moon, then the globe and display, and finally every save and export together. Moon used to sit between the layers and the projection settings for no reason I can reconstruct.
+- **Readable buttons.** The panel text moved to Atkinson Hyperlegible a while back, but the buttons stayed in 10.5 px letter-spaced mono capitals. They match now.
+- **Drop onto a layer.** Drop a file on a layer's button, or the moon's, and it loads there. Previously every drop became the base map, so dropping clouds on the clouds button replaced the world.
+- **Settings are remembered** between visits, in this browser only. It's the same data as project JSON. Images are never stored.
+- **No exporting nothing.** GIF and video now wait for a map, like PNG always did. A hint says so.
+
+### Fixed
+
+- The **Save settings as project JSON** button had no styling at all. It was missing from a CSS selector list and showed up as a grey browser default.
+- Loading a layer wrote "Reading labels.png…" into the *base map's* button and left it there. Decode errors for layers landed there too. Messages now go to the button you used.
+
 ## October 2026, part two: crop and pad
 
 ### New
