@@ -11,7 +11,7 @@ The interface uses Google’s Atkinson Hyperlegible for the control panel when a
 ## What it does
 
 - Wraps equirectangular and Mercator map sheets around a WebGL globe.
-- Warns when the source proportions do not describe a complete world cleanly.
+- Warns when the source proportions do not describe a complete world cleanly, then offers to crop or pad the sheet to 2:1.
 - Handles missing polar areas with average colour, edge colour or custom caps.
 - Keeps a simple, fixed layer stack: biomes, borders, labels, clouds, night lights and height relief.
 - Adds one separately textured moon, positioned on a simple visual orbit.
@@ -40,6 +40,19 @@ If a browser blocks opening local files, use the GitHub Pages guide instead. It 
 The base map is the geography. It sets the colour and any polar-cap treatment. A complete equirectangular world is normally **2:1**: twice as wide as it is high. It covers 360° of longitude and 180° of latitude.
 
 Mercator is different. It stretches high latitudes, so it often stops short of the poles. Choose **Mercator**, then use the latitude span slider or **Use the undistorted span**. Globify will not invent geography for the missing bits. It will cap them in the style you choose.
+
+### Crop and pad to 2:1
+
+When an equirectangular sheet isn't 2:1, buttons appear under the advice box.
+
+- **Pad to 2:1** is for sheets that are too wide. These are usually maps that stop short of the poles. It adds bands above and below, painted with whatever **Polar caps** treatment you've picked. Change the caps afterwards and the bands follow.
+- **Crop to 2:1** is for sheets that are too tall, normally because of a title block, a legend or a margin someone thought was a good idea. It trims rows off the top and bottom, and a slider picks which rows survive.
+- **Use original** puts the untouched image back. Nothing is destroyed. Globify always keeps the original and builds the fixed copy from it.
+- **Download the 2:1 sheet** saves the fixed version as a PNG, so other tools get a proper sheet too.
+
+There's deliberately no "crop the sides" option. Trimming longitude off a world map breaks the wrap, and I'd rather not offer a button whose only job is ruining things.
+
+Every layer gets the same treatment as the base map, including layers loaded after you press the button. Layer bands are transparent, so your labels don't grow grey hats. The choice is saved in project JSON too.
 
 ### The seam check
 
@@ -134,7 +147,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 
 ## Future ideas, maybe
 
-Two items off the old list are done: the seam checker and video export. What's left, in rough order of usefulness: simple crop and padding tools, named layer presets, controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
+Three items off the old list are done: the seam checker, video export, and crop and pad. What's left, in rough order of usefulness: named layer presets, controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 

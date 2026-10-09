@@ -4,6 +4,20 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part two: crop and pad
+
+### New
+
+**Crop and pad to 2:1.** Equirectangular sheets that aren't 2:1 now get **Pad to 2:1** (too wide) or **Crop to 2:1** (too tall) right under the advice box. Padding paints the new bands with your polar cap treatment. Cropping has a slider for which rows to keep. **Use original** undoes it, and **Download the 2:1 sheet** saves the result.
+
+Under the bonnet, Globify now keeps every original image and derives the fixed one from it. Layers get exactly the same crop or pad, so they still line up. They get it even when they're loaded after the fix, which is the bit I'd have forgotten. The setting goes into project JSON as a `fix` field. Older Globify ignores it, so project files stay at version 4.
+
+The advice for odd proportions is also more honest now. A wide equirectangular sheet was already being wrapped correctly with polar caps, so warning that geometry was "doing its best" undersold it a bit.
+
+### Fixed
+
+- **Polar caps: Edge colour and Custom never worked.** The segmented-button helper turned every value into a number, so `'custom'` became `NaN`. The button lit up, the colour pickers never appeared, and every globe quietly got Average caps. It's been like that since the first upload. One `+` in the wrong place. Now fixed; the GIF size and frame buttons do their own number conversion instead.
+
 ## October 2026: seams, video and a few things that were simply wrong
 
 ### New

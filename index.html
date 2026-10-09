@@ -156,6 +156,9 @@
   .advice.warn{border-left-color:#c65a46;background:rgba(198,90,70,.10)}
   .minirow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
   .minirow button{flex:1;min-width:120px}
+  .action[aria-pressed=true]{background:rgba(200,155,74,.2);border-color:var(--brass)}
+  .action:disabled{opacity:.4;cursor:default}
+  #fixRow .action{margin-top:0}
   .layer{padding:10px 0;border-top:1px solid var(--drawer-rule)}
   .layer:first-child{border-top:none}.layer-title{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}
   .layer-title .label{margin:0}.layer .buttonlike{padding:9px;font-size:13px}.layer .slide{margin-top:7px}
@@ -283,6 +286,19 @@
     </label>
     <input type="file" id="file" accept="image/*">
     <p id="mapAdvice" class="advice">Load a map and I’ll tell you whether its proportions make geographical sense. Miracles are outside scope.</p>
+    <div id="fixRow" hidden>
+      <div class="minirow">
+        <button class="action" id="fixPad" aria-pressed="false">Pad to 2:1</button>
+        <button class="action" id="fixCrop" aria-pressed="false">Crop to 2:1</button>
+        <button class="action" id="fixUndo">Use original</button>
+      </div>
+      <div class="slide gap" id="cropPosRow" hidden>
+        <input type="range" id="cropPos" min="0" max="100" step="1" value="50" aria-label="Crop position">
+        <span class="num" id="cropPosNum">centre</span>
+      </div>
+      <div class="minirow"><button class="action" id="fixSave" disabled>Download the 2:1 sheet</button></div>
+      <p class="hint" id="fixHint"></p>
+    </div>
   </div>
 
   <div class="row">
@@ -585,7 +601,13 @@ scene.add(stars);
 /* ---------------------------------------------------------------
    2. Texture building
 --------------------------------------------------------------- */
-var sourceImg = null;
+var sourceImg = null;      // what the globe paints from: the original, or a fixed copy
+var rawBase = null, rawBaseName = 'map';
+// Crop and pad. 'pad' only touches sheets wider than 2:1, 'crop' only taller ones.
+// Cropping the sides off a wide sheet would cut longitude and break the wrap, so
+// that option simply does not exist. Some mistakes deserve to be impossible.
+var sheetFix = 'none';     // 'none' | 'pad' | 'crop'
+var cropPos = .5;          // 0 keeps the top rows, 1 keeps the bottom rows
 var layers = {
   labels:{img:null, opacity:1}, borders:{img:null, opacity:1}, biomes:{img:null, opacity:.65},
   clouds:{img:null, opacity:.7}, night:{img:null, opacity:.8}, height:{img:null, opacity:.2}
@@ -1572,6 +1594,86 @@ var fileInput = $('file'), loadTxt = $('loadTxt'), loadBtn = $('load'), rSrc = $
 function imgW(i){ return i.naturalWidth || i.width || 0; }
 function imgH(i){ return i.naturalHeight || i.height || 0; }
 
+// Build the 2:1 version of a sheet. Base maps get polar bands painted with the
+// current cap treatment; layers get transparent bands, so labels and clouds do
+// not grow a pair of grey hats.
+function rowColour(img, y){
+  try{
+    cctx.clearRect(0,0,32,32);
+    cctx.drawImage(img, 0, y, imgW(img), 1, 0, 0, 32, 1);
+    return avgRow(cctx.getImageData(0,0,32,1).data, 0);
+  }catch(e){ return '#1B2942'; }
+}
+function fixedImage(img, isBase){
+  if (!img || projection !== 'equi' || sheetFix === 'none') return img;
+  var w = imgW(img), h = imgH(img), a = w/h, H = Math.round(w/2);
+  var c, x;
+  if (sheetFix === 'pad' && a > 2 && H > h){
+    var top = Math.floor((H-h)/2), bot = H - h - top;
+    c = document.createElement('canvas'); c.width = w; c.height = H;
+    x = c.getContext('2d');
+    if (isBase){
+      if (capMode === 'edge'){
+        x.drawImage(img, 0,0,w,1, 0,0,w,top);
+        x.drawImage(img, 0,h-1,w,1, 0,top+h,w,bot);
+      } else {
+        x.fillStyle = capMode === 'custom' ? $('capNorth').value : rowColour(img, 0);
+        x.fillRect(0, 0, w, top);
+        x.fillStyle = capMode === 'custom' ? $('capSouth').value : rowColour(img, h-1);
+        x.fillRect(0, top+h, w, bot);
+      }
+    }
+    x.drawImage(img, 0, top);
+    return c;
+  }
+  if (sheetFix === 'crop' && a < 2 && H < h){
+    var sy = Math.round((h-H) * cropPos);
+    c = document.createElement('canvas'); c.width = w; c.height = H;
+    x = c.getContext('2d');
+    x.drawImage(img, 0, sy, w, H, 0, 0, w, H);
+    return c;
+  }
+  return img;
+}
+
+// Re-derive every sheet from its original. Cheap enough: one canvas copy each.
+function rebuildSheets(resetSpan){
+  if (rawBase) sourceImg = fixedImage(rawBase, true);
+  Object.keys(layers).forEach(function(k){
+    if (layers[k].raw) layers[k].img = fixedImage(layers[k].raw, false);
+  });
+  if (resetSpan) applyIdealSpan();
+  paintMap(); updateHint();
+  if (sourceImg){
+    rSrc.textContent = imgW(sourceImg) + '×' + imgH(sourceImg) + ' · ' + (imgW(sourceImg)/imgH(sourceImg)).toFixed(2) + ':1' + (sourceImg !== rawBase ? ' fixed' : '');
+    diagnoseMap(sourceImg);
+  }
+  updateFixUI();
+}
+
+function updateFixUI(){
+  var row = $('fixRow');
+  if (!rawBase || projection !== 'equi'){ row.hidden = true; return; }
+  var a = imgW(rawBase)/imgH(rawBase), off = Math.abs(a-2) > .025;
+  var fixed = sourceImg !== rawBase;
+  row.hidden = !(off || fixed);
+  $('fixPad').disabled = !(a > 2.025);
+  $('fixCrop').disabled = !(a < 1.975);
+  $('fixPad').setAttribute('aria-pressed', String(sheetFix === 'pad' && fixed));
+  $('fixCrop').setAttribute('aria-pressed', String(sheetFix === 'crop' && fixed));
+  $('fixUndo').disabled = !fixed;
+  $('fixSave').disabled = !fixed;
+  $('cropPosRow').hidden = !(sheetFix === 'crop' && fixed);
+  $('fixHint').textContent = a > 2
+    ? 'Padding adds bands above and below, filled with your polar cap choice. Layers get the same bands, left transparent.'
+    : 'Cropping trims rows from the top and bottom. Slide to pick which rows survive. Layers are trimmed to match.';
+}
+
+function setSheetFix(mode){
+  sheetFix = mode;
+  rebuildSheets(true);
+}
+
 // Compare the far-left and far-right columns. On a properly wrapped world they are
 // neighbours, so a big colour jump means a visible seam where the sheet meets itself.
 // Returns 0..255, the mean per-channel difference, or -1 if the image will not cooperate.
@@ -1602,9 +1704,12 @@ function seamNote(img){
 
 function diagnoseMap(img){
   var a = imgW(img)/imgH(img), advice = $('mapAdvice');
-  if (projection === 'equi' && Math.abs(a-2) > .025){
+  if (projection === 'equi' && a > 2.025){
     advice.className = 'advice warn';
-    advice.textContent = 'This is ' + a.toFixed(2) + ':1, not the 2:1 a full equirectangular world needs. I can still wrap it, but that is geometry doing its best with bad paperwork. Use Mercator, or crop/pad it to 2:1.';
+    advice.textContent = 'This is ' + a.toFixed(2) + ':1, wider than the 2:1 of a full world, so it reads as ±' + (180/a).toFixed(1) + '° with polar caps doing the rest. Pad it to 2:1 if you want a sheet that stands on its own, or try Mercator if that is what it really is.';
+  } else if (projection === 'equi' && a < 1.975){
+    advice.className = 'advice warn';
+    advice.textContent = 'This is ' + a.toFixed(2) + ':1, taller than a full world can be, so everything is squashed north to south. Crop it to 2:1, which usually means trimming a title block or a margin.';
   } else if (projection === 'merc'){
     advice.className = 'advice';
     advice.textContent = 'Mercator reading: this sheet naturally reaches about ±' + idealSpan().toFixed(1) + '°. The remaining polar caps use your chosen treatment.';
@@ -1612,7 +1717,10 @@ function diagnoseMap(img){
     advice.className = 'advice';
     advice.textContent = 'Proportions: close enough to a full 2:1 equirectangular map.';
   }
-  var note = seamNote(img);
+  if (rawBase && sourceImg !== rawBase){
+    advice.textContent += ' ' + (sheetFix === 'pad' ? 'Padded' : 'Cropped') + ' from ' + (imgW(rawBase)/imgH(rawBase)).toFixed(2) + ':1.';
+  }
+  var note = seamNote(rawBase || img);
   if (note.indexOf('do not match') > 0) advice.className = 'advice warn';
   advice.textContent += note;
 }
@@ -1625,19 +1733,18 @@ function useImage(img, name, layerKind){
     return;
   }
   if (layerKind){
-    releaseImage(layers[layerKind].img); layers[layerKind].img = img;
+    releaseImage(layers[layerKind].raw);
+    layers[layerKind].raw = img;
+    layers[layerKind].img = fixedImage(img, false);
     $('load-' + layerKind).textContent = name;
     paintMap(); return;
   }
-  releaseImage(sourceImg);
-  sourceImg = img;
+  releaseImage(rawBase);
+  rawBase = img;
+  rawBaseName = String(name).replace(/\.[^.]+$/, '') || 'map';
   $('save').disabled = false;
   loadTxt.innerHTML = '<span class="fname">' + escapeHtml(name) + '</span>';
-  rSrc.textContent = imgW(img) + '×' + imgH(img) + ' · ' + (imgW(img)/imgH(img)).toFixed(2) + ':1';
-  applyIdealSpan();
-  paintMap();
-  updateHint();
-  diagnoseMap(img);
+  rebuildSheets(true);
 }
 
 function say(msg){ loadTxt.textContent = msg; }
@@ -1760,10 +1867,31 @@ function setSpan(v){
 segPick('caps', 'cap', function(v){
   capMode = v;
   $('capColours').hidden = v !== 'custom';
-  paintMap();
+  capsChanged();
 });
-$('capNorth').addEventListener('input', paintMap);
-$('capSouth').addEventListener('input', paintMap);
+// Padded bands are painted with the cap treatment, so they rebuild when it changes.
+function capsChanged(){ if (sheetFix === 'pad' && sourceImg !== rawBase) rebuildSheets(false); else paintMap(); }
+$('capNorth').addEventListener('input', capsChanged);
+$('capSouth').addEventListener('input', capsChanged);
+
+// crop and pad
+$('fixPad').addEventListener('click', function(){ setSheetFix('pad'); });
+$('fixCrop').addEventListener('click', function(){ setSheetFix('crop'); });
+$('fixUndo').addEventListener('click', function(){ setSheetFix('none'); });
+function cropLabel(){
+  var v = Math.round(cropPos*100);
+  $('cropPosNum').textContent = v === 0 ? 'keep top' : v === 100 ? 'keep bottom' : v === 50 ? 'centre' : v + '%';
+}
+$('cropPos').addEventListener('input', function(){
+  cropPos = +this.value / 100; cropLabel();
+  if (sheetFix === 'crop') rebuildSheets(false);
+});
+$('fixSave').addEventListener('click', function(){
+  if (!sourceImg || sourceImg === rawBase) return;
+  canvasToBlob(sourceImg, 'image/png').then(function(b){
+    deliver(b, rawBaseName + '-2x1.png', imgW(sourceImg) + '×' + imgH(sourceImg) + ' · 2:1 sheet');
+  });
+});
 
 function applyIdealSpan(){
   setSpan(Math.min(90, idealSpan()));
@@ -1775,8 +1903,7 @@ $('proj').addEventListener('click', function(e){
   Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
     x.setAttribute('aria-pressed', String(x === b));
   });
-  applyIdealSpan();
-  paintMap(); updateHint(); if (sourceImg) diagnoseMap(sourceImg);
+  rebuildSheets(true);
 });
 
 $('span').addEventListener('input', function(){
@@ -1797,11 +1924,14 @@ function segPick(id, attr, fn){
     Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
       x.setAttribute('aria-pressed', String(x === b));
     });
-    fn(+b.dataset[attr]);
+    // Pass the raw string. This used to force a number, which was fine for pixel
+    // sizes and quietly turned the polar cap modes into NaN. Edge and Custom caps
+    // have been decorative buttons ever since. Callers convert if they want numbers.
+    fn(b.dataset[attr]);
   });
 }
-segPick('gifSize', 's', function(v){ gifSize = v; });
-segPick('gifFrames', 'f', function(v){ gifFrames = v; });
+segPick('gifSize', 's', function(v){ gifSize = +v; });
+segPick('gifFrames', 'f', function(v){ gifFrames = +v; });
 
 $('gifSecs').addEventListener('input', function(){
   gifSecs = +this.value;
@@ -1885,7 +2015,7 @@ function resetDisplay(){
 function resetLayers(){
   var defaults = {labels:100, borders:100, biomes:65, clouds:70, night:80, height:20};
   Object.keys(layers).forEach(function(kind){
-    releaseImage(layers[kind].img); layers[kind].img = null;
+    releaseImage(layers[kind].raw); layers[kind].raw = null; layers[kind].img = null;
     $('file-' + kind).value = '';
     $('load-' + kind).textContent = ({labels:'Add labels', borders:'Add borders', biomes:'Add biome tint', clouds:'Add cloud sheet', night:'Add night lights', height:'Add height map'})[kind];
     $('opacity-' + kind).value = defaults[kind];
@@ -1920,7 +2050,7 @@ function projectState(){
   return {version:4, projection:projection, spanDeg:spanDeg, seam:+$('seam').value,
     tilt:+$('tilt').value, spin:+$('spin').value, capMode:capMode,
     capNorth:$('capNorth').value, capSouth:$('capSouth').value,
-    layers:layerState, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
+    layers:layerState, fix:{mode:sheetFix, cropPos:cropPos}, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
     gifSecs:gifSecs, toggles:{graticule:toggleState('tGrat'), sunlight:toggleState('tSun'),
       stars:toggleState('tStars'), atmosphere:toggleState('tAtmo'), transparent:toggleState('tAlpha'),
       dither:toggleState('tDither'), keepFraming:toggleState('tFrame')}};
@@ -1959,7 +2089,11 @@ function applyProject(s){
   setToggle('tGrat', t.graticule); setToggle('tSun', t.sunlight); setToggle('tStars', t.stars);
   setToggle('tAtmo', t.atmosphere); setToggle('tAlpha', t.transparent); setToggle('tDither', t.dither);
   setToggle('tFrame', t.keepFraming);
-  paintMap(); if (sourceImg) diagnoseMap(sourceImg);
+  var fx = s.fix || {};
+  sheetFix = (fx.mode === 'pad' || fx.mode === 'crop') ? fx.mode : 'none';
+  cropPos = fx.cropPos == null ? .5 : clamp(+fx.cropPos, 0, 1);
+  $('cropPos').value = Math.round(cropPos*100); cropLabel();
+  rebuildSheets(false);
 }
 $('saveProject').addEventListener('click', function(){
   deliver(new Blob([JSON.stringify(projectState(), null, 2)], {type:'application/json'}), 'globify-project.json', 'Globify settings project');
