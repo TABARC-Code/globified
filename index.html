@@ -448,7 +448,7 @@
     <button id="saveProject">Save settings as project JSON</button>
     <label id="loadProject" class="buttonlike" for="projectFile">Load settings project</label>
     <input type="file" id="projectFile" accept="application/json,.json">
-    <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs.</p>
+    <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs. This browser also remembers your last settings on its own; the project file is for keeping or sharing them.</p>
   </div>
 </div>
 
@@ -2180,6 +2180,24 @@ window.addEventListener('keydown', function(e){
   if (e.key === 'ArrowUp')    { pitch = clamp(pitch - step, -1.35, 1.35); vPitch = 0; }
   if (e.key === 'ArrowDown')  { pitch = clamp(pitch + step, -1.35, 1.35); vPitch = 0; }
 });
+
+// Remember settings between visits, using the same state as project JSON.
+// Settings only; images are never stored. Private windows and blocked storage
+// throw, in which case the app simply starts fresh like it always did.
+var SETTINGS_KEY = 'globify.settings.v4', saveTimer = null;
+function rememberSettings(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(projectState())); }catch(e){}
+  }, 400);
+}
+['input','change','click'].forEach(function(t){ drawer.addEventListener(t, rememberSettings); });
+try{
+  var saved = localStorage.getItem(SETTINGS_KEY);
+  if (saved) applyProject(JSON.parse(saved));
+}catch(e){
+  try{ localStorage.removeItem(SETTINGS_KEY); }catch(e2){}
+}
 
 })();
 </script>
