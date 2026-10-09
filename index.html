@@ -1805,8 +1805,13 @@ function viaBlobURL(f){
 function acceptFile(f, layerKind){
   if (!f){ say('No file came through. Choose it again.'); return; }
   var name = f.name || 'pasted image';
+  // Talk on the button the file came through. Layer progress used to land on
+  // the base map's button and stay there, so 'Reading labels.png…' sat under
+  // a perfectly loaded world map forever.
+  var btn = layerKind ? $('load-' + layerKind) : null;
+  var tell = btn ? function(m){ btn.textContent = m; } : say;
 
-  say('Reading ' + name + '…');
+  tell('Reading ' + name + '…');
 
   viaBitmap(f)
     .catch(function(e1){
@@ -1821,6 +1826,11 @@ function acceptFile(f, layerKind){
       useImage(img, name, layerKind);
     })
     .catch(function(why){
+      if (btn){
+        btn.textContent = 'Could not read ' + name + '. Try PNG or JPG.';
+        btn.title = String(why);
+        return;
+      }
       say('Could not decode ' + name + ' (' + why + '). This browser may not support that format; JPG, PNG, WebP, or AVIF are safer bets.');
     });
 }
