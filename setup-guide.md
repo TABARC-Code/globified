@@ -30,7 +30,7 @@ If you are going to use it more than once, make the launch less faffy:
 
 1. In the Globify folder, right-click `index.html`.
 2. On Windows 11, choose **Show more options** if needed.
-3. Choose **Send to â†’ Desktop (create shortcut)**.
+3. Choose **Send to > Desktop (create shortcut)**.
 4. Rename the shortcut to `Globify` if Windows gives it a needlessly long name.
 
 From then on, double-click the desktop shortcut. The original `index.html` must stay in its Globify folder, so do not drag it onto the desktop and accidentally separate it from the rest of the project notes.
@@ -68,7 +68,7 @@ Right-click `index.html`, choose **Open with**, then choose a web browser. The f
 
 ### The typeface looks different when I am offline
 
-Thats expected. The control panel requests Atkinson Hyperlegible from Google Fonts when a connection is available. Offline, it uses your computer's default sans-serif font. The application and map processing still work locally.
+That's expected. The control panel requests Atkinson Hyperlegible from Google Fonts when a connection is available. Offline, it uses your computer's default sans-serif font. The application and map processing still work locally.
 
 ### I moved the shortcut and it stopped working
 
@@ -78,7 +78,7 @@ The shortcut points to the original `index.html`. Find the Globify folder, open 
 
 When a newer ZIP arrives, extract it into a new folder such as `Documents\Globify 2`. Open the new `index.html` and make a new shortcut if you need one. Keep an older folder until you have checked the new version opens correctly and your map files load as expected.
 
-Your settings project JSON files and artwork are separate from Globify itself. They arn't changed, uploaded or removed by updating the application.
+Your settings project JSON files and artwork are separate from Globify itself. They aren't changed, uploaded or removed by updating the application.
 
 ## Privacy, in plain terms
 
