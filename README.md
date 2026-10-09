@@ -95,6 +95,8 @@ It is a composition tool, not a gravity simulator. One moon is intentional for n
 | Re-centre | Double-click the globe or click **Centre the globe** |
 | Close export preview | Click **Close** or press Escape |
 | Load a layer or moon map | Click its button, or drop the file straight onto it |
+| Cancel a GIF or video export | Click **Cancel** on the progress card, or press Escape |
+| Show all of this in the app | Press `?`, or **Controls and shortcuts** under View |
 
 Drop a file anywhere else and it becomes the base map. On a phone held upright, the globe pulls back so the whole planet fits. Zoom yourself and it stops second-guessing you; **Reset view** hands control back.
 
@@ -156,10 +158,8 @@ Three items off the old list are done: the seam checker, video export, and crop 
 
 Smaller things I noticed while using it and haven't fixed yet:
 
-- A **Cancel** button (or Escape) for a GIF or video that's taking too long. At the moment you wait it out or reload.
 - Collapsible panel sections. The panel is still about 3,000 pixels of scrolling, just in a better order.
 - Undo for **Clear layers**. Six file pickers is a lot to redo after one wrong click.
-- A small help overlay on `?` listing the mouse and keyboard controls, because nobody reads READMEs. Present company excepted.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
