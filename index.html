@@ -220,12 +220,13 @@
     padding:13px;background:var(--brass);color:var(--void);
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   }
-  #sheetClose{
+  #sheetClose,#progCancel{
     width:100%;margin-top:10px;padding:11px;cursor:pointer;
     background:none;border:1px solid var(--rule);color:var(--dim);
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
   }
   #sheet .hint{margin:10px 0 14px}
+  #progCancel:hover{border-color:var(--brass);color:var(--bone)}
 
   .seg.two{grid-template-columns:repeat(2,1fr)}
   .gap{margin-top:9px}
@@ -457,6 +458,7 @@
     <div class="label" id="progLabel">Working</div>
     <div id="progBar"><i id="progFill"></i></div>
     <div class="pct" id="progPct">0%</div>
+    <button id="progCancel">Cancel (Esc)</button>
   </div>
 </div>
 
@@ -1190,7 +1192,19 @@ function canvasToBlob(canvas, mime){
 var exporting = false;
 var gifSize = 480, gifFrames = 60, gifSecs = 6;
 
+// Cancel. The GIF checks between frames; the video stops its recorder at the next
+// tick. Either way the capture rig restores the view and nothing gets saved.
+// Before this, the only way out of a 640 px, 90-frame mistake was to reload.
+var cancelExport = false, CANCELLED = 'cancelled';
+function requestCancel(){
+  if (!exporting) return;
+  cancelExport = true;
+  $('progLabel').textContent = 'Stopping…';
+  $('progCancel').disabled = true;
+}
+
 function yieldUI(i, n, label){
+  if (cancelExport) return Promise.reject(CANCELLED);
   var pct = Math.round((i+1)/n*100);
   $('gifHint').textContent = label + ' ' + pct + '%';
   showProgress(true, label, pct);
@@ -1252,6 +1266,7 @@ function setExportButtons(busy){
 function exportGIF(){
   if (exporting) return Promise.resolve();
   exporting = true;
+  cancelExport = false; $('progCancel').disabled = false;
   setExportButtons(true);
   showProgress(true, 'Preparing', 0);
 
@@ -1323,7 +1338,7 @@ function exportGIF(){
     $('gifHint').textContent = 'Saved ' + N + ' frames, ' + (bytes.length/1048576).toFixed(2) + ' MB.';
   }).catch(function(e){
     restore();
-    $('gifHint').textContent = 'Export failed: ' + ((e && e.message) || e);
+    $('gifHint').textContent = e === CANCELLED ? 'GIF cancelled. Nothing saved.' : 'Export failed: ' + ((e && e.message) || e);
   });
 }
 
@@ -1346,6 +1361,7 @@ var videoType = (function(){
 function exportVideo(){
   if (exporting || !videoType) return Promise.resolve();
   exporting = true;
+  cancelExport = false; $('progCancel').disabled = false;
   setExportButtons(true);
   showProgress(true, 'Recording', 0);
 
@@ -1378,6 +1394,7 @@ function exportVideo(){
     // Pace against a fixed start time so setTimeout drift cannot stretch the turn.
     var t0 = performance.now(), i = 0;
     (function next(){
+      if (cancelExport){ rec.onstop = function(){ reject(CANCELLED); }; rec.stop(); return; }
       if (i >= N){ rec.stop(); return; }
       cap.draw(i/N);
       if (manual) track.requestFrame();
@@ -1398,7 +1415,7 @@ function exportVideo(){
     $('gifHint').textContent = 'Saved a ' + gifSecs + 's ' + ext.toUpperCase() + ', ' + (blob.size/1048576).toFixed(2) + ' MB.';
   }).catch(function(e){
     if (exporting) restore();
-    $('gifHint').textContent = 'Video export failed: ' + ((e && e.message) || e);
+    $('gifHint').textContent = e === CANCELLED ? 'Video cancelled. Nothing saved.' : 'Video export failed: ' + ((e && e.message) || e);
   });
 }
 
@@ -2162,12 +2179,14 @@ $('save').addEventListener('click', function(){
 });
 
 $('sheetClose').addEventListener('click', closeSheet);
+$('progCancel').addEventListener('click', requestCancel);
 document.getElementById('sheet').addEventListener('click', function(e){
   if (e.target === this) closeSheet();
 });
 
 // keyboard nudge
 window.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && exporting){ requestCancel(); return; }
   if (e.key === 'Escape' && !document.getElementById('sheet').hidden){ closeSheet(); return; }
   // Arrow keys on a focused slider used to move the slider AND spin the planet.
   // Two things for the price of one, neither of them wanted.
