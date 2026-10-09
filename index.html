@@ -122,6 +122,17 @@
   .row{padding:14px 0;border-top:1px solid rgba(200,155,74,.14)}
   .row:first-of-type{border-top:none}
   .row .label{display:block;margin-bottom:9px}
+  /* Collapsible sections. Native <details>, so keyboard and screen readers get it for free. */
+  .group{border-top:1px solid var(--drawer-rule)}
+  .group summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+    padding:15px 0;font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
+  .group summary::-webkit-details-marker{display:none}
+  .group summary::after{content:'+';font-size:18px;line-height:1;color:var(--drawer-muted)}
+  .group[open] summary::after{content:'\2212'}
+  .group summary:hover::after{color:var(--brass)}
+  .group summary .count{margin-left:8px;font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--drawer-muted)}
+  .group .row:first-of-type{border-top:1px solid rgba(200,155,74,.14)}
 
   /* source button */
   #load,.buttonlike{
@@ -262,7 +273,6 @@
     }
     #drawer.closed{transform:none}
     #handle{display:none}
-    #drawer .row:first-of-type{padding-top:78px}
     #readout{left:auto;right:354px;transform:none;bottom:24px}
     #lockup{right:346px}
   }
@@ -289,6 +299,8 @@
     <span class="chev">▲</span>
   </div>
 
+  <details class="group" id="sec-map" open>
+  <summary><span>Map</span></summary>
   <div class="row">
     <span class="label">Map sheet</span>
     <label id="load" for="file">
@@ -353,7 +365,10 @@
     <span class="label">Drawing guide</span>
     <button id="tmpl">Download a template for these settings</button>
   </div>
+  </details>
 
+  <details class="group" id="sec-layers">
+  <summary><span>Layers <span class="count" id="layerCount"></span></span></summary>
   <div class="row">
     <span class="label">Map layers</span>
     <div id="layers">
@@ -366,7 +381,10 @@
     </div>
     <p class="hint">Drop a file on a layer's button to load it there. All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
   </div>
+  </details>
 
+  <details class="group" id="sec-moon">
+  <summary><span>Moon</span></summary>
   <div class="row">
     <span class="label">Moon</span>
     <div class="toggles"><button class="tog" id="tMoon" aria-pressed="false"><span class="dot"></span>Show moon</button></div>
@@ -378,7 +396,10 @@
     <div class="slide"><input type="range" id="moonTilt" min="-60" max="60" value="18" aria-label="Moon orbit tilt"><span class="num" id="moonTiltNum">18°</span></div>
     <p class="hint">One proper moon, with its own wrapped map. It is posed on an orbit rather than numerically simulated. Kepler can have the next release.</p>
   </div>
+  </details>
 
+  <details class="group" id="sec-globe" open>
+  <summary><span>Globe and view</span></summary>
   <div class="row">
     <span class="label">Axial tilt</span>
     <div class="slide">
@@ -422,7 +443,10 @@
     </div>
     <p class="hint">Clear layers removes the six optional sheets, not the base map, and can be undone until you load another layer. Reset moon restores its plain crater texture and hides it.</p>
   </div>
+  </details>
 
+  <details class="group" id="sec-export" open>
+  <summary><span>Save and export</span></summary>
   <div class="row">
     <button id="save" disabled>Save this view as PNG</button>
   </div>
@@ -461,6 +485,7 @@
     <input type="file" id="projectFile" accept="application/json,.json">
     <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs. This browser also remembers your last settings on its own; the project file is for keeping or sharing them.</p>
   </div>
+  </details>
 </div>
 
 <div id="prog" hidden>
@@ -1802,6 +1827,7 @@ function useImage(img, name, layerKind){
     layers[layerKind].raw = img;
     layers[layerKind].img = fixedImage(img, false);
     $('load-' + layerKind).textContent = name;
+    updateLayerCount();
     paintMap(); return;
   }
   releaseImage(rawBase);
@@ -2133,6 +2159,11 @@ function resetLayers(){
     $('opacity-' + kind).dispatchEvent(new Event('input'));
   });
 }
+// The Layers section starts closed, so its heading says what is inside it.
+function updateLayerCount(){
+  var n = Object.keys(layers).filter(function(k){ return layers[k].raw; }).length;
+  document.getElementById('layerCount').textContent = n ? '· ' + n + ' loaded' : '';
+}
 function undoClearLayers(){
   if (!layerUndo) return;
   var stash = layerUndo; layerUndo = null;
@@ -2146,6 +2177,7 @@ function undoClearLayers(){
     $('opacity-' + kind).dispatchEvent(new Event('input'));
   });
   paintMap();
+  updateLayerCount();
 }
 function resetMoon(){
   releaseImage(moon.img); moon.img = null;
@@ -2159,7 +2191,7 @@ function resetMoon(){
 }
 $('resetView').addEventListener('click', resetView);
 $('resetDisplay').addEventListener('click', resetDisplay);
-$('resetLayers').addEventListener('click', resetLayers);
+$('resetLayers').addEventListener('click', function(){ resetLayers(); updateLayerCount(); });
 $('undoLayers').addEventListener('click', undoClearLayers);
 $('resetMoon').addEventListener('click', resetMoon);
 
@@ -2289,6 +2321,21 @@ function rememberSettings(){
   }, 400);
 }
 ['input','change','click'].forEach(function(t){ drawer.addEventListener(t, rememberSettings); });
+// Which sections are open is a per-browser preference, kept apart from project
+// settings because it is about the panel, not the planet.
+var SECTIONS_KEY = 'globify.sections';
+Array.prototype.forEach.call(document.querySelectorAll('#drawer details.group'), function(d){
+  d.addEventListener('toggle', function(){
+    var st = {};
+    Array.prototype.forEach.call(document.querySelectorAll('#drawer details.group'), function(x){ st[x.id] = x.open; });
+    try{ localStorage.setItem(SECTIONS_KEY, JSON.stringify(st)); }catch(e){}
+  });
+});
+try{
+  var sec = JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}');
+  Object.keys(sec).forEach(function(id){ var d = document.getElementById(id); if (d && d.tagName === 'DETAILS') d.open = !!sec[id]; });
+}catch(e){}
+
 try{
   var saved = localStorage.getItem(SETTINGS_KEY);
   if (saved) applyProject(JSON.parse(saved));
