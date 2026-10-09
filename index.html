@@ -201,6 +201,9 @@
     padding:24px;overflow-y:auto;
   }
   #prog[hidden],#sheet[hidden],#help[hidden]{display:none}
+  /* Any rule that sets display (.minirow, .slide) beats the browser's own [hidden]
+     style, so the custom cap pickers and the crop slider showed when they shouldn't. */
+  [hidden]{display:none!important}
   #prog .card,#sheet .card,#help .card{
     width:100%;max-width:420px;
     border:1px solid var(--rule);background:var(--panel);
