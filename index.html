@@ -415,8 +415,9 @@
       <button class="action" id="resetDisplay">Reset display</button>
       <button class="action" id="resetLayers">Clear layers</button>
       <button class="action" id="resetMoon">Reset moon</button>
+      <button class="action" id="undoLayers" hidden>Undo clear layers</button>
     </div>
-    <p class="hint">Clear layers removes the six optional sheets, not the base map. Reset moon restores its plain crater texture and hides it.</p>
+    <p class="hint">Clear layers removes the six optional sheets, not the base map, and can be undone until you load another layer. Reset moon restores its plain crater texture and hides it.</p>
   </div>
 
   <div class="row">
@@ -1793,6 +1794,7 @@ function useImage(img, name, layerKind){
     return;
   }
   if (layerKind){
+    dropLayerUndo();
     releaseImage(layers[layerKind].raw);
     layers[layerKind].raw = img;
     layers[layerKind].img = fixedImage(img, false);
@@ -2101,15 +2103,46 @@ function resetDisplay(){
   $('spin').value = reduceMotion ? 0 : 30;
   $('spin').dispatchEvent(new Event('input'));
 }
+// Clear layers keeps what it removed until the next layer load or the next clear,
+// so one wrong click no longer means six trips through the file picker.
+var layerUndo = null;
+function dropLayerUndo(){
+  if (!layerUndo) return;
+  Object.keys(layerUndo).forEach(function(k){ releaseImage(layerUndo[k].raw); });
+  layerUndo = null;
+  $('undoLayers').hidden = true;
+}
 function resetLayers(){
   var defaults = {labels:100, borders:100, biomes:65, clouds:70, night:80, height:20};
+  dropLayerUndo();
+  var stash = {}, any = false;
   Object.keys(layers).forEach(function(kind){
-    releaseImage(layers[kind].raw); layers[kind].raw = null; layers[kind].img = null;
+    stash[kind] = {raw:layers[kind].raw, opacity:$('opacity-' + kind).value, label:$('load-' + kind).textContent};
+    if (layers[kind].raw) any = true;
+  });
+  if (any){ layerUndo = stash; $('undoLayers').hidden = false; }
+  else Object.keys(stash).forEach(function(k){ releaseImage(stash[k].raw); });
+  Object.keys(layers).forEach(function(kind){
+    layers[kind].raw = null; layers[kind].img = null;
     $('file-' + kind).value = '';
     $('load-' + kind).textContent = ({labels:'Add labels', borders:'Add borders', biomes:'Add biome tint', clouds:'Add cloud sheet', night:'Add night lights', height:'Add height map'})[kind];
     $('opacity-' + kind).value = defaults[kind];
     $('opacity-' + kind).dispatchEvent(new Event('input'));
   });
+}
+function undoClearLayers(){
+  if (!layerUndo) return;
+  var stash = layerUndo; layerUndo = null;
+  $('undoLayers').hidden = true;
+  Object.keys(stash).forEach(function(kind){
+    var st = stash[kind];
+    layers[kind].raw = st.raw;
+    layers[kind].img = fixedImage(st.raw, false);
+    $('load-' + kind).textContent = st.label;
+    $('opacity-' + kind).value = st.opacity;
+    $('opacity-' + kind).dispatchEvent(new Event('input'));
+  });
+  paintMap();
 }
 function resetMoon(){
   releaseImage(moon.img); moon.img = null;
@@ -2124,6 +2157,7 @@ function resetMoon(){
 $('resetView').addEventListener('click', resetView);
 $('resetDisplay').addEventListener('click', resetDisplay);
 $('resetLayers').addEventListener('click', resetLayers);
+$('undoLayers').addEventListener('click', undoClearLayers);
 $('resetMoon').addEventListener('click', resetMoon);
 
 // Settings only. Packing user artwork into JSON would be technically possible
