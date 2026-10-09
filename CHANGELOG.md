@@ -4,6 +4,18 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part five: a shorter panel, and a second chance
+
+### New
+
+- **Collapsible sections.** The panel is now five sections: Map, Layers, Moon, Globe and view, and Save and export. They're plain `<details>` elements, so the keyboard and screen readers handle them without any help from me. Layers and Moon start folded. The Layers heading shows "· 2 loaded" or similar, so folding a section never hides that it has something in it. The browser remembers which ones you leave open. First visit is roughly 2,400 px of panel instead of 3,050. Fold what you don't use and it's a lot less.
+- **Undo clear layers.** **Clear layers** now sets the images aside instead of throwing them away, and an **Undo clear layers** button appears. Images, button names and opacities all come back. It forgets once you load another layer or clear again, which is the point where an undo stops meaning anything obvious.
+
+### Fixed
+
+- **Hidden things weren't hidden.** Any panel row with its own `display` style ignored the `hidden` attribute. So the **Custom** cap colour pickers showed whatever cap mode you'd picked, and they always have. The crop position slider showed with no crop active, and that one was mine, from part two. One global rule fixes both. My earlier test checked the attribute rather than what was actually on screen, which is a lesson I'd quite like to only learn once.
+- Removed a CSS rule that never matched anything. It would have started matching inside the new sections and pushed each one's first row down by 78 px.
+
 ## October 2026, part four: a way out, and a cheat sheet
 
 ### New
