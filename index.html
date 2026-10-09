@@ -133,7 +133,7 @@
     font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-style:normal;font-size:15px;
     transition:background .18s,border-color .18s;
   }
-  #load:hover,#load.hot,.buttonlike:hover{background:rgba(200,155,74,.18);border-color:var(--brass)}
+  #load:hover,#load.hot,.buttonlike:hover,.buttonlike.hot{background:rgba(200,155,74,.18);border-color:var(--brass)}
   #load .fname{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);
     letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   input[type=file]{display:none}
@@ -355,7 +355,7 @@
       <div class="layer"><div class="layer-title"><span class="label">Night lights</span></div><label class="buttonlike" id="load-night" for="file-night">Add night lights</label><input type="file" id="file-night" accept="image/*"><div class="slide"><input type="range" id="opacity-night" min="0" max="100" value="80" aria-label="Night lights opacity"><span class="num">80%</span></div></div>
       <div class="layer"><div class="layer-title"><span class="label">Height map</span></div><label class="buttonlike" id="load-height" for="file-height">Add height map</label><input type="file" id="file-height" accept="image/*"><div class="slide"><input type="range" id="opacity-height" min="0" max="100" value="20" aria-label="Relief strength"><span class="num">20%</span></div></div>
     </div>
-    <p class="hint">All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
+    <p class="hint">Drop a file on a layer's button to load it there. All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
   </div>
 
   <div class="row">
@@ -1881,6 +1881,23 @@ moonControl('moonTilt', 'tilt', 1, '°', 0);
 });
 window.addEventListener('drop', function(e){
   if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], null);
+});
+
+// Drop onto a layer's (or the moon's) button to load it there. Before this,
+// every drop became the base map, so a cloud sheet dropped on 'Add cloud sheet'
+// quietly replaced your world. Which is one way to get weather.
+Object.keys(layers).concat(['moon']).forEach(function(kind){
+  var target = $('load-' + kind);
+  target.addEventListener('dragover', function(e){
+    e.preventDefault(); e.stopPropagation();
+    loadBtn.classList.remove('hot'); target.classList.add('hot');
+  });
+  target.addEventListener('dragleave', function(){ target.classList.remove('hot'); });
+  target.addEventListener('drop', function(e){
+    e.preventDefault(); e.stopPropagation();
+    target.classList.remove('hot'); loadBtn.classList.remove('hot');
+    if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], kind);
+  });
 });
 
 // projection + span
