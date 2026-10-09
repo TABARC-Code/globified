@@ -1203,7 +1203,9 @@ function beginCapture(S, transparent){
   var keepFraming = toggleState('tFrame');
   var prevStars = stars.visible, prevHalo = halo.visible;
   var prevYaw = yaw, prevPR = renderer.getPixelRatio();
-  var eDist = Math.max(dist, 3.4);   // never crop the sphere out of frame
+  // Square frame, so the phone's pulled-back fit distance does not apply. A zoom
+  // the user chose does, but never closer than 3.4 or the sphere gets cropped.
+  var eDist = Math.max(userZoomed ? dist : 3.4, 3.4);
 
   renderer.setPixelRatio(1);
   renderer.setSize(S, S, false);
@@ -1434,7 +1436,7 @@ el.addEventListener('pointermove', function(e){
   if (n >= 2 && dragMode === 'gesture'){
     var d = pinchDist();
     if (pinchStart > 0 && d > 0){
-      distTarget = clamp(distTarget * (pinchStart/d), 1.55, 8);
+      distTarget = clamp(distTarget * (pinchStart/d), 1.55, 8); userZoomed = true;
       pinchStart = d;
     }
     var c = centroid();
@@ -1464,7 +1466,7 @@ el.addEventListener('pointercancel', endPointer);
 
 el.addEventListener('wheel', function(e){
   e.preventDefault();
-  distTarget = clamp(distTarget + e.deltaY * 0.0022, 1.55, 8);
+  distTarget = clamp(distTarget + e.deltaY * 0.0022, 1.55, 8); userZoomed = true;
 }, {passive:false});
 
 el.addEventListener('dblclick', function(){ recenter(); });
@@ -1532,11 +1534,22 @@ function updateReadout(){
 /* ---------------------------------------------------------------
    5. Loop
 --------------------------------------------------------------- */
+// 3.4 suits a landscape screen. On a phone held upright the sides were cut off,
+// so pull back until the globe (and a sliver of halo) fits the visible width.
+var userZoomed = false;
+function fitDist(){
+  var w = stage.clientWidth, h = stage.clientHeight || 1;
+  if (window.innerWidth >= 820) w -= document.getElementById('drawer').getBoundingClientRect().width;
+  var half = Math.atan(Math.tan(camera.fov * Math.PI/360) * Math.min(1, Math.max(.2, w/h)));
+  return clamp(1.1 / Math.sin(half), 3.4, 8);
+}
+
 function resize(){
   var w = stage.clientWidth, h = stage.clientHeight;
   renderer.setSize(w,h);
   camera.aspect = w/h;
   camera.updateProjectionMatrix();
+  if (!userZoomed) dist = distTarget = fitDist();
   if (!userPanned) recenter();
 }
 window.addEventListener('resize', resize);
@@ -2002,7 +2015,8 @@ $('center').addEventListener('click', recenter);
 // it vaporises a carefully placed map without warning. The base sheet stays put.
 function resetView(){
   yaw = 0; pitch = 0; vYaw = 0; vPitch = 0;
-  dist = 3.4; distTarget = 3.4;
+  userZoomed = false;
+  dist = distTarget = fitDist();
   recenter();
 }
 function resetDisplay(){
