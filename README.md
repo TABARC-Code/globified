@@ -97,6 +97,9 @@ It is a composition tool, not a gravity simulator. One moon is intentional for n
 | Load a layer or moon map | Click its button, or drop the file straight onto it |
 | Cancel a GIF or video export | Click **Cancel** on the progress card, or press Escape |
 | Show all of this in the app | Press `?`, or **Controls and shortcuts** under View |
+| Fold a panel section away | Click its heading, or Tab to it and press Enter |
+
+The panel comes in five sections: Map, Layers, Moon, Globe and view, and Save and export. Layers and Moon start folded, because most globes don't need them. The Layers heading tells you how many are loaded, so a folded section can't hide the fact that something is in it. Your browser remembers which sections you leave open.
 
 Drop a file anywhere else and it becomes the base map. On a phone held upright, the globe pulls back so the whole planet fits. Zoom yourself and it stops second-guessing you; **Reset view** hands control back.
 
@@ -120,7 +123,7 @@ The new **Quick resets** section is deliberately specific. It exists to make exp
 | --- | --- | --- |
 | Reset view | Globe rotation, zoom, pan and drag momentum | Map, layers, moon and display settings |
 | Reset display | Graticule, sunlight, starfield, halo and spin to the starting display | Map, layers, moon and camera position |
-| Clear layers | Removes the six optional sheets and restores their default opacity values | The base map and all geometry settings |
+| Clear layers | Removes the six optional sheets and restores their default opacity values. **Undo clear layers** brings them back until you load another layer | The base map and all geometry settings |
 | Reset moon | Hides the moon, restores its generated crater texture and its default pose | The planet and every map layer |
 
 ## Save a settings project
@@ -155,11 +158,6 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 ## Future ideas, maybe
 
 Three items off the old list are done: the seam checker, video export, and crop and pad. What's left, in rough order of usefulness: named layer presets, controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
-
-Smaller things I noticed while using it and haven't fixed yet:
-
-- Collapsible panel sections. The panel is still about 3,000 pixels of scrolling, just in a better order.
-- Undo for **Clear layers**. Six file pickers is a lot to redo after one wrong click.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
