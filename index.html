@@ -133,7 +133,7 @@
     font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-style:normal;font-size:15px;
     transition:background .18s,border-color .18s;
   }
-  #load:hover,#load.hot,.buttonlike:hover{background:rgba(200,155,74,.18);border-color:var(--brass)}
+  #load:hover,#load.hot,.buttonlike:hover,.buttonlike.hot{background:rgba(200,155,74,.18);border-color:var(--brass)}
   #load .fname{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brass);
     letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   input[type=file]{display:none}
@@ -229,20 +229,21 @@
 
   .seg.two{grid-template-columns:repeat(2,1fr)}
   .gap{margin-top:9px}
-  #center,#ideal,#tmpl,#gif,#video,.action{
+  #center,#ideal,#tmpl,#gif,#video,#saveProject,.action{
     width:100%;padding:11px;cursor:pointer;margin-top:10px;
     background:none;border:1px solid var(--rule);color:var(--brass);
-    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-weight:700;font-size:13px;letter-spacing:.02em;
   }
   #center{margin-top:0}
-  #center:hover,#ideal:hover,#tmpl:hover,#gif:hover,#video:hover,.action:hover{background:rgba(200,155,74,.12)}
+  #center:hover,#ideal:hover,#tmpl:hover,#gif:hover,#video:hover,#saveProject:hover,.action:hover{background:rgba(200,155,74,.12)}
   #gif:disabled,#video:disabled,#ideal:disabled{opacity:.4;cursor:default}
   #save{
     width:100%;padding:12px;margin-top:2px;cursor:pointer;
     background:var(--brass);border:none;color:var(--void);
-    font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-weight:700;font-size:14px;letter-spacing:.02em;
   }
   #save:disabled{opacity:.35;cursor:default}
+  #loadProject{margin-top:10px}
 
   @media(min-width:820px){
     #drawer{
@@ -302,31 +303,6 @@
   </div>
 
   <div class="row">
-    <span class="label">Map layers</span>
-    <div id="layers">
-      <div class="layer"><div class="layer-title"><span class="label">Labels</span></div><label class="buttonlike" id="load-labels" for="file-labels">Add labels</label><input type="file" id="file-labels" accept="image/*"><div class="slide"><input type="range" id="opacity-labels" min="0" max="100" value="100" aria-label="Labels opacity"><span class="num">100%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Borders</span></div><label class="buttonlike" id="load-borders" for="file-borders">Add borders</label><input type="file" id="file-borders" accept="image/*"><div class="slide"><input type="range" id="opacity-borders" min="0" max="100" value="100" aria-label="Borders opacity"><span class="num">100%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Biomes</span></div><label class="buttonlike" id="load-biomes" for="file-biomes">Add biome tint</label><input type="file" id="file-biomes" accept="image/*"><div class="slide"><input type="range" id="opacity-biomes" min="0" max="100" value="65" aria-label="Biomes opacity"><span class="num">65%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Clouds</span></div><label class="buttonlike" id="load-clouds" for="file-clouds">Add cloud sheet</label><input type="file" id="file-clouds" accept="image/*"><div class="slide"><input type="range" id="opacity-clouds" min="0" max="100" value="70" aria-label="Clouds opacity"><span class="num">70%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Night lights</span></div><label class="buttonlike" id="load-night" for="file-night">Add night lights</label><input type="file" id="file-night" accept="image/*"><div class="slide"><input type="range" id="opacity-night" min="0" max="100" value="80" aria-label="Night lights opacity"><span class="num">80%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Height map</span></div><label class="buttonlike" id="load-height" for="file-height">Add height map</label><input type="file" id="file-height" accept="image/*"><div class="slide"><input type="range" id="opacity-height" min="0" max="100" value="20" aria-label="Relief strength"><span class="num">20%</span></div></div>
-    </div>
-    <p class="hint">All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
-  </div>
-
-  <div class="row">
-    <span class="label">Moon</span>
-    <div class="toggles"><button class="tog" id="tMoon" aria-pressed="false"><span class="dot"></span>Show moon</button></div>
-    <label class="buttonlike" id="load-moon" for="file-moon">Add moon map</label>
-    <input type="file" id="file-moon" accept="image/*">
-    <div class="slide gap"><input type="range" id="moonSize" min="8" max="45" value="22" aria-label="Moon size"><span class="num" id="moonSizeNum">22%</span></div>
-    <div class="slide"><input type="range" id="moonDistance" min="115" max="240" value="165" aria-label="Moon orbit distance"><span class="num" id="moonDistanceNum">1.65 r</span></div>
-    <div class="slide"><input type="range" id="moonOrbit" min="0" max="360" value="42" aria-label="Moon orbit position"><span class="num" id="moonOrbitNum">42°</span></div>
-    <div class="slide"><input type="range" id="moonTilt" min="-60" max="60" value="18" aria-label="Moon orbit tilt"><span class="num" id="moonTiltNum">18°</span></div>
-    <p class="hint">One proper moon, with its own wrapped map. It is posed on an orbit rather than numerically simulated. Kepler can have the next release.</p>
-  </div>
-
-  <div class="row">
     <span class="label">Read the sheet as</span>
     <div class="seg two" id="proj">
       <button data-proj="equi" aria-pressed="true">Equirectangular</button>
@@ -341,11 +317,6 @@
       <span class="num" id="spanNum">±90°</span>
     </div>
     <button id="ideal">Use the undistorted span</button>
-  </div>
-
-  <div class="row">
-    <span class="label">Drawing guide</span>
-    <button id="tmpl">Download a template for these settings</button>
   </div>
 
   <div class="row">
@@ -367,6 +338,36 @@
       <input type="range" id="seam" min="-180" max="180" step="1" value="0" aria-label="Prime meridian">
       <span class="num" id="seamNum">0°</span>
     </div>
+  </div>
+
+  <div class="row">
+    <span class="label">Drawing guide</span>
+    <button id="tmpl">Download a template for these settings</button>
+  </div>
+
+  <div class="row">
+    <span class="label">Map layers</span>
+    <div id="layers">
+      <div class="layer"><div class="layer-title"><span class="label">Labels</span></div><label class="buttonlike" id="load-labels" for="file-labels">Add labels</label><input type="file" id="file-labels" accept="image/*"><div class="slide"><input type="range" id="opacity-labels" min="0" max="100" value="100" aria-label="Labels opacity"><span class="num">100%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Borders</span></div><label class="buttonlike" id="load-borders" for="file-borders">Add borders</label><input type="file" id="file-borders" accept="image/*"><div class="slide"><input type="range" id="opacity-borders" min="0" max="100" value="100" aria-label="Borders opacity"><span class="num">100%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Biomes</span></div><label class="buttonlike" id="load-biomes" for="file-biomes">Add biome tint</label><input type="file" id="file-biomes" accept="image/*"><div class="slide"><input type="range" id="opacity-biomes" min="0" max="100" value="65" aria-label="Biomes opacity"><span class="num">65%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Clouds</span></div><label class="buttonlike" id="load-clouds" for="file-clouds">Add cloud sheet</label><input type="file" id="file-clouds" accept="image/*"><div class="slide"><input type="range" id="opacity-clouds" min="0" max="100" value="70" aria-label="Clouds opacity"><span class="num">70%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Night lights</span></div><label class="buttonlike" id="load-night" for="file-night">Add night lights</label><input type="file" id="file-night" accept="image/*"><div class="slide"><input type="range" id="opacity-night" min="0" max="100" value="80" aria-label="Night lights opacity"><span class="num">80%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Height map</span></div><label class="buttonlike" id="load-height" for="file-height">Add height map</label><input type="file" id="file-height" accept="image/*"><div class="slide"><input type="range" id="opacity-height" min="0" max="100" value="20" aria-label="Relief strength"><span class="num">20%</span></div></div>
+    </div>
+    <p class="hint">Drop a file on a layer's button to load it there. All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
+  </div>
+
+  <div class="row">
+    <span class="label">Moon</span>
+    <div class="toggles"><button class="tog" id="tMoon" aria-pressed="false"><span class="dot"></span>Show moon</button></div>
+    <label class="buttonlike" id="load-moon" for="file-moon">Add moon map</label>
+    <input type="file" id="file-moon" accept="image/*">
+    <div class="slide gap"><input type="range" id="moonSize" min="8" max="45" value="22" aria-label="Moon size"><span class="num" id="moonSizeNum">22%</span></div>
+    <div class="slide"><input type="range" id="moonDistance" min="115" max="240" value="165" aria-label="Moon orbit distance"><span class="num" id="moonDistanceNum">1.65 r</span></div>
+    <div class="slide"><input type="range" id="moonOrbit" min="0" max="360" value="42" aria-label="Moon orbit position"><span class="num" id="moonOrbitNum">42°</span></div>
+    <div class="slide"><input type="range" id="moonTilt" min="-60" max="60" value="18" aria-label="Moon orbit tilt"><span class="num" id="moonTiltNum">18°</span></div>
+    <p class="hint">One proper moon, with its own wrapped map. It is posed on an orbit rather than numerically simulated. Kepler can have the next release.</p>
   </div>
 
   <div class="row">
@@ -412,6 +413,10 @@
   </div>
 
   <div class="row">
+    <button id="save" disabled>Save this view as PNG</button>
+  </div>
+
+  <div class="row">
     <span class="label">Animated turn</span>
     <div class="seg" id="gifSize">
       <button data-s="320" aria-pressed="false">320 px</button>
@@ -439,15 +444,11 @@
   </div>
 
   <div class="row">
-    <button id="save" disabled>Save this view as PNG</button>
-  </div>
-
-  <div class="row">
     <span class="label">Project settings</span>
     <button id="saveProject">Save settings as project JSON</button>
     <label id="loadProject" class="buttonlike" for="projectFile">Load settings project</label>
     <input type="file" id="projectFile" accept="application/json,.json">
-    <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs.</p>
+    <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs. This browser also remembers your last settings on its own; the project file is for keeping or sharing them.</p>
   </div>
 </div>
 
@@ -1202,7 +1203,9 @@ function beginCapture(S, transparent){
   var keepFraming = toggleState('tFrame');
   var prevStars = stars.visible, prevHalo = halo.visible;
   var prevYaw = yaw, prevPR = renderer.getPixelRatio();
-  var eDist = Math.max(dist, 3.4);   // never crop the sphere out of frame
+  // Square frame, so the phone's pulled-back fit distance does not apply. A zoom
+  // the user chose does, but never closer than 3.4 or the sphere gets cropped.
+  var eDist = Math.max(userZoomed ? dist : 3.4, 3.4);
 
   renderer.setPixelRatio(1);
   renderer.setSize(S, S, false);
@@ -1235,9 +1238,15 @@ function beginCapture(S, transparent){
   };
 }
 
+// Exports wait for a base map, same as the PNG button always did. Spinning the
+// placeholder grid into a 4 MB GIF helps nobody.
 function setExportButtons(busy){
-  $('gif').disabled = busy;
-  $('video').disabled = busy || !videoType;
+  var none = !rawBase;
+  $('gif').disabled = busy || none;
+  $('video').disabled = busy || none || !videoType;
+  $('save').disabled = none;
+  if (none) $('gifHint').textContent = 'Load a map first. The exports need something to spin.';
+  else if ($('gifHint').textContent.indexOf('Load a map first') === 0) $('gifHint').textContent = '';
 }
 
 function exportGIF(){
@@ -1433,7 +1442,7 @@ el.addEventListener('pointermove', function(e){
   if (n >= 2 && dragMode === 'gesture'){
     var d = pinchDist();
     if (pinchStart > 0 && d > 0){
-      distTarget = clamp(distTarget * (pinchStart/d), 1.55, 8);
+      distTarget = clamp(distTarget * (pinchStart/d), 1.55, 8); userZoomed = true;
       pinchStart = d;
     }
     var c = centroid();
@@ -1463,7 +1472,7 @@ el.addEventListener('pointercancel', endPointer);
 
 el.addEventListener('wheel', function(e){
   e.preventDefault();
-  distTarget = clamp(distTarget + e.deltaY * 0.0022, 1.55, 8);
+  distTarget = clamp(distTarget + e.deltaY * 0.0022, 1.55, 8); userZoomed = true;
 }, {passive:false});
 
 el.addEventListener('dblclick', function(){ recenter(); });
@@ -1531,11 +1540,22 @@ function updateReadout(){
 /* ---------------------------------------------------------------
    5. Loop
 --------------------------------------------------------------- */
+// 3.4 suits a landscape screen. On a phone held upright the sides were cut off,
+// so pull back until the globe (and a sliver of halo) fits the visible width.
+var userZoomed = false;
+function fitDist(){
+  var w = stage.clientWidth, h = stage.clientHeight || 1;
+  if (window.innerWidth >= 820) w -= document.getElementById('drawer').getBoundingClientRect().width;
+  var half = Math.atan(Math.tan(camera.fov * Math.PI/360) * Math.min(1, Math.max(.2, w/h)));
+  return clamp(1.1 / Math.sin(half), 3.4, 8);
+}
+
 function resize(){
   var w = stage.clientWidth, h = stage.clientHeight;
   renderer.setSize(w,h);
   camera.aspect = w/h;
   camera.updateProjectionMatrix();
+  if (!userZoomed) dist = distTarget = fitDist();
   if (!userPanned) recenter();
 }
 window.addEventListener('resize', resize);
@@ -1742,7 +1762,7 @@ function useImage(img, name, layerKind){
   releaseImage(rawBase);
   rawBase = img;
   rawBaseName = String(name).replace(/\.[^.]+$/, '') || 'map';
-  $('save').disabled = false;
+  setExportButtons(exporting);
   loadTxt.innerHTML = '<span class="fname">' + escapeHtml(name) + '</span>';
   rebuildSheets(true);
 }
@@ -1785,8 +1805,13 @@ function viaBlobURL(f){
 function acceptFile(f, layerKind){
   if (!f){ say('No file came through. Choose it again.'); return; }
   var name = f.name || 'pasted image';
+  // Talk on the button the file came through. Layer progress used to land on
+  // the base map's button and stay there, so 'Reading labels.png…' sat under
+  // a perfectly loaded world map forever.
+  var btn = layerKind ? $('load-' + layerKind) : null;
+  var tell = btn ? function(m){ btn.textContent = m; } : say;
 
-  say('Reading ' + name + '…');
+  tell('Reading ' + name + '…');
 
   viaBitmap(f)
     .catch(function(e1){
@@ -1801,6 +1826,11 @@ function acceptFile(f, layerKind){
       useImage(img, name, layerKind);
     })
     .catch(function(why){
+      if (btn){
+        btn.textContent = 'Could not read ' + name + '. Try PNG or JPG.';
+        btn.title = String(why);
+        return;
+      }
       say('Could not decode ' + name + ' (' + why + '). This browser may not support that format; JPG, PNG, WebP, or AVIF are safer bets.');
     });
 }
@@ -1851,6 +1881,23 @@ moonControl('moonTilt', 'tilt', 1, '°', 0);
 });
 window.addEventListener('drop', function(e){
   if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], null);
+});
+
+// Drop onto a layer's (or the moon's) button to load it there. Before this,
+// every drop became the base map, so a cloud sheet dropped on 'Add cloud sheet'
+// quietly replaced your world. Which is one way to get weather.
+Object.keys(layers).concat(['moon']).forEach(function(kind){
+  var target = $('load-' + kind);
+  target.addEventListener('dragover', function(e){
+    e.preventDefault(); e.stopPropagation();
+    loadBtn.classList.remove('hot'); target.classList.add('hot');
+  });
+  target.addEventListener('dragleave', function(){ target.classList.remove('hot'); });
+  target.addEventListener('drop', function(e){
+    e.preventDefault(); e.stopPropagation();
+    target.classList.remove('hot'); loadBtn.classList.remove('hot');
+    if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], kind);
+  });
 });
 
 // projection + span
@@ -1939,6 +1986,7 @@ $('gifSecs').addEventListener('input', function(){
 });
 $('gif').addEventListener('click', exportGIF);
 $('video').addEventListener('click', exportVideo);
+setExportButtons(false);
 if (!videoType){
   $('video').disabled = true;
   $('video').title = 'This browser has no MediaRecorder video support. GIF still works.';
@@ -2001,7 +2049,8 @@ $('center').addEventListener('click', recenter);
 // it vaporises a carefully placed map without warning. The base sheet stays put.
 function resetView(){
   yaw = 0; pitch = 0; vYaw = 0; vPitch = 0;
-  dist = 3.4; distTarget = 3.4;
+  userZoomed = false;
+  dist = distTarget = fitDist();
   recenter();
 }
 function resetDisplay(){
@@ -2131,6 +2180,24 @@ window.addEventListener('keydown', function(e){
   if (e.key === 'ArrowUp')    { pitch = clamp(pitch - step, -1.35, 1.35); vPitch = 0; }
   if (e.key === 'ArrowDown')  { pitch = clamp(pitch + step, -1.35, 1.35); vPitch = 0; }
 });
+
+// Remember settings between visits, using the same state as project JSON.
+// Settings only; images are never stored. Private windows and blocked storage
+// throw, in which case the app simply starts fresh like it always did.
+var SETTINGS_KEY = 'globify.settings.v4', saveTimer = null;
+function rememberSettings(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(projectState())); }catch(e){}
+  }, 400);
+}
+['input','change','click'].forEach(function(t){ drawer.addEventListener(t, rememberSettings); });
+try{
+  var saved = localStorage.getItem(SETTINGS_KEY);
+  if (saved) applyProject(JSON.parse(saved));
+}catch(e){
+  try{ localStorage.removeItem(SETTINGS_KEY); }catch(e2){}
+}
 
 })();
 </script>

@@ -94,6 +94,9 @@ It is a composition tool, not a gravity simulator. One moon is intentional for n
 | Zoom | Mouse wheel or pinch |
 | Re-centre | Double-click the globe or click **Centre the globe** |
 | Close export preview | Click **Close** or press Escape |
+| Load a layer or moon map | Click its button, or drop the file straight onto it |
+
+Drop a file anywhere else and it becomes the base map. On a phone held upright, the globe pulls back so the whole planet fits. Zoom yourself and it stops second-guessing you; **Reset view** hands control back.
 
 The GIF exporter offers 320, 480 and 640 pixel frames, plus 36, 60 or 90 frames per turn. GIF is old and limited to 256 colours, but it still travels well. Dither can soften colour bands at the cost of a larger file.
 
@@ -124,6 +127,8 @@ The new **Quick resets** section is deliberately specific. It exists to make exp
 
 When you load a settings project, add the map files again. This keeps private artwork out of a JSON blob that might otherwise get copied to places it should not be.
 
+Your browser also remembers the last settings you used, so closing the tab doesn't throw away an hour of fiddling with tilt and moon orbits. Same rules: settings only, never images, and it lives in that one browser. A private window forgets, as it should. The project file is still the way to keep a setup or pass it on.
+
 ## GitHub Pages, from zero
 
 Everything needed for a simple Pages deployment is already in this folder, including `.nojekyll`. There is no build command and no package manager.
@@ -148,6 +153,13 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 ## Future ideas, maybe
 
 Three items off the old list are done: the seam checker, video export, and crop and pad. What's left, in rough order of usefulness: named layer presets, controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
+
+Smaller things I noticed while using it and haven't fixed yet:
+
+- A **Cancel** button (or Escape) for a GIF or video that's taking too long. At the moment you wait it out or reload.
+- Collapsible panel sections. The panel is still about 3,000 pixels of scrolling, just in a better order.
+- Undo for **Clear layers**. Six file pickers is a lot to redo after one wrong click.
+- A small help overlay on `?` listing the mouse and keyboard controls, because nobody reads READMEs. Present company excepted.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
