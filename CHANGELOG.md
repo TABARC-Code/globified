@@ -4,6 +4,14 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part thirteen: blend modes
+
+### New
+
+- **Blend modes** for labels, borders, biomes and clouds: Normal, Multiply, Screen, Overlay and Soft light, picked next to each layer's name. Since part eleven each layer keeps its projected copy, so a blend mode is just one setting at the moment the copies are blended. It costs nothing extra to draw. They're saved in project files (anything not on the list falls back to Normal), **Clear layers** resets them, and its undo restores them.
+- I checked them against the actual compositing formulas, not by eye. With a mid-grey map under solid red: Normal gives (255,0,0), Multiply (128,0,0), Screen (255,128,128), Overlay (255,1,1) and Soft light (181,64,64). That's exactly what the W3C formulas give. I'd guessed Soft light would land somewhere else, and the arithmetic said otherwise, so I trust the arithmetic.
+- The README used to say blend modes would turn this into a GIS project. With the cached layers, it turned out to be about twenty lines. Reorderable layers are still a no.
+
 ## October 2026, part twelve: PNG sequences
 
 ### New
