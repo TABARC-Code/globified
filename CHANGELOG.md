@@ -4,6 +4,14 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part twelve: PNG sequences
+
+### New
+
+- **Export frames as a PNG sequence (zip).** It's the same turn as the GIF, at the same size and frame count, but every frame is a full-colour PNG, numbered `frame_000.png` onwards, in one zip. With **Transparent** on, the frames keep proper soft transparency, the one thing GIF can't do. It's useful for video editors, compositing and sprite sheets. Cancel works as it does for GIF.
+- The zip is written by about 50 lines of code in the page, using "stored" mode, which means no compression. PNGs are already compressed, so deflating them again would cost time and save next to nothing. I didn't want to bundle a zip library for that.
+- I checked the output with tools that aren't mine. Python's zip reader and `unzip` both pass every file's checksum. A 36-frame export gives 36 different frames, all 320×320 with an alpha channel. In transparent mode the corners really are transparent (alpha 0) and the planet is solid.
+
 ## October 2026, part eleven: sliders that keep up
 
 ### Better
