@@ -18,7 +18,7 @@ The interface uses Google’s Atkinson Hyperlegible for the control panel when a
 - Lets you move the prime meridian, axial tilt, spin, light, graticule, stars and atmosphere.
 - Includes scoped resets for the view, display, optional layers and moon.
 - Checks whether the left and right edges of your map actually meet, before the globe shows you the hard way.
-- Exports the current view as a PNG, or a full rotation as a GIF or a WebM/MP4 video.
+- Exports the current view as a PNG, or a full rotation as a GIF, a WebM/MP4 video or a zip of numbered PNG frames.
 - Saves and reloads settings as JSON without quietly packing your artwork into it.
 - Runs locally once downloaded. Your maps stay in your browser.
 
@@ -133,7 +133,11 @@ Transparent GIF turns off the starfield and atmosphere halo because GIF transpar
 
 The catch: it records in real time. A 10-second turn takes 10 seconds. Keep the tab in front while it runs, because browsers throttle background tabs and the result gets jerky. No transparency either. Video files are far smaller than GIFs and don't band colours, so for anything going on a website, video is the better bet. GIF is still the one that pastes into everything.
 
-If the button is greyed out, either no map is loaded yet (GIF and PNG wait for one too) or your browser doesn't have MediaRecorder video support. The second is rare now, but it happens.
+### PNG sequence
+
+**Export frames as a PNG sequence (zip)** renders the same turn as the GIF, at the same size and frame count, but saves every frame as a full-colour PNG: `frame_000.png`, `frame_001.png` and so on, in one zip. Turn on **Transparent** and the frames keep proper soft-edged transparency, which GIF can't do. This is the one to use for video editors, compositing, or a sprite sheet. It's bigger than a GIF and smaller than you'd fear.
+
+If the video button is greyed out, either no map is loaded yet (GIF and PNG wait for one too) or your browser doesn't have MediaRecorder video support. The second is rare now, but it happens.
 
 ## Quick resets
 
@@ -180,7 +184,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 
 ## Future ideas, maybe
 
-Three items off the old list are done: the seam checker, video export, and crop and pad. Named layer presets are done too. What's left, in rough order of usefulness: controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
+Most of the old list is done now: the seam checker, video export, crop and pad, layer presets and PNG sequences. Two things are left. One is controlled blend modes. The other is an optional File System Access workflow, so a project could reopen with its original images instead of asking for them again. That one only works in Chromium-based browsers, which is why it's still a maybe.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
