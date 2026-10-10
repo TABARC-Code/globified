@@ -4,6 +4,20 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part six: a proper look round
+
+I reviewed the whole repo before adding anything else, and found three things that were simply wrong.
+
+### Fixed
+
+- **Loading a project told you to re-add a map that was already there.** The message went onto the base map's button, over the map's own name. It now has its own line in the project section, and only asks for the map when there isn't one.
+- **A damaged project file could leave "±NaN°" on the panel for good.** A missing `spanDeg` slipped straight through, and remembered settings then saved it, so it came back on every reload. Every value in a project file is now checked as it loads. Missing, mistyped or silly values fall back to the defaults or get clamped. I fed it a deliberately rubbish file, with things like `"capMode": "plaid"` and a moon orbit of a billion degrees, and nothing got through.
+- **Picking the same file twice did nothing.** Browsers only react when a file picker's value changes, and none of ours ever cleared it. They clear themselves now, so reloading the same project after fiddling actually reloads it.
+
+### Docs
+
+- The README now says the video button is also greyed out until a map is loaded, lists everything a project file saves, and warns about Safari's canvas size limit on very large maps. That last one is untested on a real Safari, and the README says so.
+
 ## October 2026, part five: a shorter panel, and a second chance
 
 ### New

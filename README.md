@@ -113,11 +113,11 @@ Transparent GIF turns off the starfield and atmosphere halo because GIF transpar
 
 The catch: it records in real time. A 10-second turn takes 10 seconds. Keep the tab in front while it runs, because browsers throttle background tabs and the result gets jerky. No transparency either. Video files are far smaller than GIFs and don't band colours, so for anything going on a website, video is the better bet. GIF is still the one that pastes into everything.
 
-If the button is greyed out, your browser doesn't have MediaRecorder video support. That's rare now, but it happens.
+If the button is greyed out, either no map is loaded yet (GIF and PNG wait for one too) or your browser doesn't have MediaRecorder video support. The second is rare now, but it happens.
 
 ## Quick resets
 
-The new **Quick resets** section is deliberately specific. It exists to make experimentation safe without offering one large red button that erases a project because someone was curious.
+**Quick resets**, under Globe and view, are deliberately specific. It exists to make experimentation safe without offering one large red button that erases a project because someone was curious.
 
 | Button | What it resets | What it keeps |
 | --- | --- | --- |
@@ -128,7 +128,9 @@ The new **Quick resets** section is deliberately specific. It exists to make exp
 
 ## Save a settings project
 
-**Save settings as project JSON** keeps the globe settings, layer opacities, display switches and GIF choices. It deliberately does not include the source images.
+**Save settings as project JSON** keeps the globe settings, layer opacities, display switches, moon pose, crop or pad choice, and GIF choices. It deliberately does not include the source images.
+
+A project file is checked as it loads. Anything missing, mistyped or out of range falls back to the default rather than breaking the globe, so hand-editing one is safe enough. Picking the same file again after changing things works too; it reloads.
 
 When you load a settings project, add the map files again. This keeps private artwork out of a JSON blob that might otherwise get copied to places it should not be.
 
@@ -152,6 +154,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 - You need a modern browser with WebGL enabled.
 - Large source images and long 640 px GIFs can be slow, especially on phones.
 - Video export records in real time and needs the tab to stay in front.
+- Crop and pad make a full-size copy of the map. Safari caps how big a canvas can be, so on Safari a very large map (roughly above 5,800 × 2,900) may come out blank when cropped or padded. I haven't been able to test that on a real Safari, so treat it as a warning, not a measurement. Chrome and Firefox allow far larger.
 - All layers are static images. There is no timeline, animation system or live weather data.
 - The self-contained renderer is based on embedded Three.js r128. It is dependable for this tool, but updating it needs proper testing rather than blind version-number worship.
 
