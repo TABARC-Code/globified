@@ -1923,16 +1923,19 @@ function escapeHtml(s){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
-fileInput.addEventListener('change', function(e){ acceptFile(e.target.files[0], null); });
+// Each picker clears itself once it has the file. Browsers only fire 'change'
+// when the value changes, so re-picking the same file used to do nothing at all.
+function takeFile(input){ var f = input.files[0]; input.value = ''; return f; }
+fileInput.addEventListener('change', function(){ acceptFile(takeFile(this), null); });
 Object.keys(layers).forEach(function(kind){
-  $('file-' + kind).addEventListener('change', function(e){ acceptFile(e.target.files[0], kind); });
+  $('file-' + kind).addEventListener('change', function(){ acceptFile(takeFile(this), kind); });
   $('opacity-' + kind).addEventListener('input', function(){
     layers[kind].opacity = +this.value/100;
     this.nextElementSibling.textContent = this.value + '%';
     paintMap();
   });
 });
-$('file-moon').addEventListener('change', function(e){ acceptFile(e.target.files[0], 'moon'); });
+$('file-moon').addEventListener('change', function(){ acceptFile(takeFile(this), 'moon'); });
 function moonControl(id, key, scale, suffix, digits, displayScale){
   $(id).addEventListener('input', function(){
     moon[key] = +this.value * scale;
@@ -2270,8 +2273,8 @@ function applyProject(s){
 $('saveProject').addEventListener('click', function(){
   deliver(new Blob([JSON.stringify(projectState(), null, 2)], {type:'application/json'}), 'globify-project.json', 'Globify settings project');
 });
-$('projectFile').addEventListener('change', function(e){
-  var f = e.target.files[0]; if (!f) return;
+$('projectFile').addEventListener('change', function(){
+  var f = takeFile(this); if (!f) return;
   // Report here, not on the base map's button: that one used to say 'add the map
   // image again' while the map sat there, perfectly loaded, under the message.
   f.text().then(function(t){
