@@ -1681,6 +1681,19 @@ document.documentElement.style.setProperty('--drawer-h','62px');
 // file loading
 var fileInput = $('file'), loadTxt = $('loadTxt'), loadBtn = $('load'), rSrc = $('rSrc');
 
+// Every file button is a <label> for a hidden file input. Labels can't take
+// focus, so Tab skipped all of them: a keyboard user could not load a map, a
+// layer, the moon or a project. Make each one a proper focusable button.
+Array.prototype.forEach.call(document.querySelectorAll('label[for]'), function(label){
+  var input = document.getElementById(label.htmlFor);
+  if (!input || input.type !== 'file') return;
+  label.tabIndex = 0;
+  label.setAttribute('role', 'button');
+  label.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); input.click(); }
+  });
+});
+
 function imgW(i){ return i.naturalWidth || i.width || 0; }
 function imgH(i){ return i.naturalHeight || i.height || 0; }
 
