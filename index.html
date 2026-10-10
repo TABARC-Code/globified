@@ -2303,10 +2303,23 @@ $('projectFile').addEventListener('change', function(){
 });
 
 // save
+// Save what you can actually see. The canvas fills the window, but the panel
+// covers part of it and the globe is panned to sit beside the panel, so the
+// old full-canvas PNG had the planet off-centre next to an empty strip of stars.
+function visibleRect(){
+  var c = renderer.domElement, sx = c.width / (stage.clientWidth || 1), sy = c.height / (stage.clientHeight || 1);
+  var d = $('drawer').getBoundingClientRect(), w = stage.clientWidth, h = stage.clientHeight;
+  if (window.innerWidth >= 820) w = Math.max(1, Math.min(w, d.left));
+  else h = Math.max(1, Math.min(h, d.top));
+  return {w: Math.round(w * sx), h: Math.round(h * sy)};
+}
 $('save').addEventListener('click', function(){
   renderer.render(scene, camera);
-  canvasToBlob(renderer.domElement, 'image/png').then(function(b){
-    deliver(b, exportName('view.png'), 'Still frame');
+  var r = visibleRect(), out = document.createElement('canvas');
+  out.width = r.w; out.height = r.h;
+  out.getContext('2d').drawImage(renderer.domElement, 0, 0, r.w, r.h, 0, 0, r.w, r.h);
+  canvasToBlob(out, 'image/png').then(function(b){
+    deliver(b, exportName('view.png'), 'Still frame · ' + r.w + '×' + r.h);
   });
 });
 
