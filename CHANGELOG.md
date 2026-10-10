@@ -4,6 +4,19 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part fourteen: the small stuff, again
+
+### Better
+
+- **Drop a project file anywhere.** A `.json` dropped on the page used to be treated as an image and failed with a decode error. Now it loads as a project, the same as the **Load settings project** button. The project section opens so you can actually see the message.
+- **The template button shows it's working.** Drawing and encoding the 2048 × 1024 template takes a few seconds, and the button just sat there looking unpressed, which invites a second and third click. It now reads "Drawing the template…" and ignores clicks until it's done.
+- **The download tip matches the file.** The fallback tip under every download said "press and hold the image", including for videos, zips and project files. It now gives the right advice for each kind of file.
+- **A tab icon and a page description.** It's a small inline SVG globe in the app's own colours, with no extra file to lose. There's a meta description for link previews and search, and a theme colour. It matters most if you publish it on GitHub Pages.
+
+### Docs
+
+- **The setup guide now says where the ZIP comes from.** It mentioned "the Globify ZIP file" five times and never said where to get it, which is a fine way to lose someone at step one. There's now a short section: the green **Code** button, then **Download ZIP**, and no account needed.
+
 ## October 2026, part thirteen: blend modes
 
 ### New
