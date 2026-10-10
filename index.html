@@ -483,6 +483,7 @@
     <button id="saveProject">Save settings as project JSON</button>
     <label id="loadProject" class="buttonlike" for="projectFile">Load settings project</label>
     <input type="file" id="projectFile" accept="application/json,.json">
+    <p class="hint" id="projectMsg" aria-live="polite"></p>
     <p class="hint">Projects store settings, not your artwork. It stays on your machine, where it belongs. This browser also remembers your last settings on its own; the project file is for keeping or sharing them.</p>
   </div>
   </details>
@@ -2258,8 +2259,12 @@ $('saveProject').addEventListener('click', function(){
 });
 $('projectFile').addEventListener('change', function(e){
   var f = e.target.files[0]; if (!f) return;
-  f.text().then(function(t){ applyProject(JSON.parse(t)); say('Project settings loaded. Add the map image again; browsers will not quietly keep it.'); })
-    .catch(function(err){ say('Could not load project: ' + err.message); });
+  // Report here, not on the base map's button: that one used to say 'add the map
+  // image again' while the map sat there, perfectly loaded, under the message.
+  f.text().then(function(t){
+    applyProject(JSON.parse(t));
+    $('projectMsg').textContent = 'Loaded ' + f.name + '.' + (rawBase ? '' : ' Add the map image again; browsers will not quietly keep it.');
+  }).catch(function(err){ $('projectMsg').textContent = 'Could not load ' + f.name + ': ' + err.message; });
 });
 
 // save
