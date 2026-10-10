@@ -129,6 +129,10 @@
   #presetPick option,#presetPick optgroup{background:#302A24;color:var(--drawer-ink)}
   #presetName{flex:2;min-width:120px}
   .presets{margin-top:14px}
+  .blend{padding:3px 6px;background:rgba(255,244,220,.045);color:var(--drawer-muted);border:1px solid var(--drawer-rule);
+    font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-size:12px}
+  .blend option{background:#302A24;color:var(--drawer-ink)}
+  .blend:focus-visible{outline:2px solid var(--verdigris);outline-offset:1px}
   .presets .minirow{align-items:stretch}
   .presets .minirow .action{margin-top:0;min-width:72px;flex:1}
   #presetPick:focus-visible,#presetName:focus-visible{outline:2px solid var(--verdigris);outline-offset:1px}
@@ -380,10 +384,10 @@
   <div class="row">
     <span class="label">Map layers</span>
     <div id="layers">
-      <div class="layer"><div class="layer-title"><span class="label">Labels</span></div><label class="buttonlike" id="load-labels" for="file-labels">Add labels</label><input type="file" id="file-labels" accept="image/*"><div class="slide"><input type="range" id="opacity-labels" min="0" max="100" value="100" aria-label="Labels opacity"><span class="num">100%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Borders</span></div><label class="buttonlike" id="load-borders" for="file-borders">Add borders</label><input type="file" id="file-borders" accept="image/*"><div class="slide"><input type="range" id="opacity-borders" min="0" max="100" value="100" aria-label="Borders opacity"><span class="num">100%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Biomes</span></div><label class="buttonlike" id="load-biomes" for="file-biomes">Add biome tint</label><input type="file" id="file-biomes" accept="image/*"><div class="slide"><input type="range" id="opacity-biomes" min="0" max="100" value="65" aria-label="Biomes opacity"><span class="num">65%</span></div></div>
-      <div class="layer"><div class="layer-title"><span class="label">Clouds</span></div><label class="buttonlike" id="load-clouds" for="file-clouds">Add cloud sheet</label><input type="file" id="file-clouds" accept="image/*"><div class="slide"><input type="range" id="opacity-clouds" min="0" max="100" value="70" aria-label="Clouds opacity"><span class="num">70%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Labels</span><select class="blend" id="blend-labels" aria-label="Labels blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option></select></div><label class="buttonlike" id="load-labels" for="file-labels">Add labels</label><input type="file" id="file-labels" accept="image/*"><div class="slide"><input type="range" id="opacity-labels" min="0" max="100" value="100" aria-label="Labels opacity"><span class="num">100%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Borders</span><select class="blend" id="blend-borders" aria-label="Borders blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option></select></div><label class="buttonlike" id="load-borders" for="file-borders">Add borders</label><input type="file" id="file-borders" accept="image/*"><div class="slide"><input type="range" id="opacity-borders" min="0" max="100" value="100" aria-label="Borders opacity"><span class="num">100%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Biomes</span><select class="blend" id="blend-biomes" aria-label="Biomes blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option></select></div><label class="buttonlike" id="load-biomes" for="file-biomes">Add biome tint</label><input type="file" id="file-biomes" accept="image/*"><div class="slide"><input type="range" id="opacity-biomes" min="0" max="100" value="65" aria-label="Biomes opacity"><span class="num">65%</span></div></div>
+      <div class="layer"><div class="layer-title"><span class="label">Clouds</span><select class="blend" id="blend-clouds" aria-label="Clouds blend mode"><option value="source-over">Normal</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option><option value="soft-light">Soft light</option></select></div><label class="buttonlike" id="load-clouds" for="file-clouds">Add cloud sheet</label><input type="file" id="file-clouds" accept="image/*"><div class="slide"><input type="range" id="opacity-clouds" min="0" max="100" value="70" aria-label="Clouds opacity"><span class="num">70%</span></div></div>
       <div class="layer"><div class="layer-title"><span class="label">Night lights</span></div><label class="buttonlike" id="load-night" for="file-night">Add night lights</label><input type="file" id="file-night" accept="image/*"><div class="slide"><input type="range" id="opacity-night" min="0" max="100" value="80" aria-label="Night lights opacity"><span class="num">80%</span></div></div>
       <div class="layer"><div class="layer-title"><span class="label">Height map</span></div><label class="buttonlike" id="load-height" for="file-height">Add height map</label><input type="file" id="file-height" accept="image/*"><div class="slide"><input type="range" id="opacity-height" min="0" max="100" value="20" aria-label="Relief strength"><span class="num">20%</span></div></div>
     </div>
@@ -694,6 +698,11 @@ var layers = {
   labels:{img:null, opacity:1}, borders:{img:null, opacity:1}, biomes:{img:null, opacity:.65},
   clouds:{img:null, opacity:.7}, night:{img:null, opacity:.8}, height:{img:null, opacity:.2}
 };
+// Blend modes for the four paint layers. Canvas composite operations, applied
+// when the cached projections are blended, so they cost nothing extra.
+// Night lights and relief go through the 3D material instead and don't get one.
+var BLEND_MODES = ['source-over','multiply','screen','overlay','soft-light'];
+var blendMode = {labels:'source-over', borders:'source-over', biomes:'source-over', clouds:'source-over'};
 var moon = {img:null, visible:false, size:.22, distance:1.65, orbit:42, tilt:18};
 var projection = 'equi';   // 'equi' | 'merc'
 var spanDeg = 90;          // how far from the equator the sheet reaches
@@ -836,9 +845,11 @@ function paintMap(){
     if (!layer.img){ dropProjected(kind); return; }
     if (layer.opacity <= 0) return;
     tctx.globalAlpha = layer.opacity;
+    tctx.globalCompositeOperation = blendMode[kind];
     tctx.drawImage(projectedSheet(kind, layer.img), 0, 0);
   });
   tctx.globalAlpha = 1;
+  tctx.globalCompositeOperation = 'source-over';
   paintSpecialLayer('night', nightCtx, nightTex);
   paintSpecialLayer('height', heightCtx, heightTex);
   matLit.emissiveIntensity = layers.night.img ? layers.night.opacity : 0;
@@ -2077,6 +2088,16 @@ Object.keys(layers).forEach(function(kind){
     paintMap();
   });
 });
+Object.keys(blendMode).forEach(function(kind){
+  $('blend-' + kind).addEventListener('change', function(){
+    blendMode[kind] = BLEND_MODES.indexOf(this.value) >= 0 ? this.value : 'source-over';
+    paintMap();
+  });
+});
+function setBlend(kind, v){
+  blendMode[kind] = BLEND_MODES.indexOf(v) >= 0 ? v : 'source-over';
+  $('blend-' + kind).value = blendMode[kind];
+}
 $('file-moon').addEventListener('change', function(){ acceptFile(takeFile(this), 'moon'); });
 function moonControl(id, key, scale, suffix, digits, displayScale){
   $(id).addEventListener('input', function(){
@@ -2293,7 +2314,7 @@ function resetLayers(){
   dropLayerUndo();
   var stash = {}, any = false;
   Object.keys(layers).forEach(function(kind){
-    stash[kind] = {raw:layers[kind].raw, opacity:$('opacity-' + kind).value, label:$('load-' + kind).textContent};
+    stash[kind] = {raw:layers[kind].raw, opacity:$('opacity-' + kind).value, label:$('load-' + kind).textContent, blend:blendMode[kind]};
     if (layers[kind].raw) any = true;
   });
   if (any){ layerUndo = stash; $('undoLayers').hidden = false; }
@@ -2303,6 +2324,7 @@ function resetLayers(){
     $('file-' + kind).value = '';
     $('load-' + kind).textContent = ({labels:'Add labels', borders:'Add borders', biomes:'Add biome tint', clouds:'Add cloud sheet', night:'Add night lights', height:'Add height map'})[kind];
     $('opacity-' + kind).value = defaults[kind];
+    if (kind in blendMode) setBlend(kind, 'source-over');
     $('opacity-' + kind).dispatchEvent(new Event('input'));
   });
 }
@@ -2321,6 +2343,7 @@ function undoClearLayers(){
     layers[kind].img = fixedImage(st.raw, false);
     $('load-' + kind).textContent = st.label;
     $('opacity-' + kind).value = st.opacity;
+    if (kind in blendMode) setBlend(kind, st.blend);
     $('opacity-' + kind).dispatchEvent(new Event('input'));
   });
   paintMap();
@@ -2445,7 +2468,7 @@ function projectState(){
   return {version:4, projection:projection, spanDeg:spanDeg, seam:+$('seam').value,
     tilt:+$('tilt').value, spin:+$('spin').value, capMode:capMode,
     capNorth:$('capNorth').value, capSouth:$('capSouth').value,
-    layers:layerState, presets:userPresets, fix:{mode:sheetFix, cropPos:cropPos}, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
+    layers:layerState, blend:blendMode, presets:userPresets, fix:{mode:sheetFix, cropPos:cropPos}, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
     gifSecs:gifSecs, toggles:{graticule:toggleState('tGrat'), sunlight:toggleState('tSun'),
       stars:toggleState('tStars'), atmosphere:toggleState('tAtmo'), transparent:toggleState('tAlpha'),
       dither:toggleState('tDither'), keepFraming:toggleState('tFrame')}};
@@ -2497,6 +2520,7 @@ function applyProject(s){
   setToggle('tGrat', t.graticule); setToggle('tSun', t.sunlight); setToggle('tStars', t.stars);
   setToggle('tAtmo', t.atmosphere); setToggle('tAlpha', t.transparent); setToggle('tDither', t.dither);
   setToggle('tFrame', t.keepFraming);
+  Object.keys(blendMode).forEach(function(k){ setBlend(k, s.blend && s.blend[k]); });
   mergePresets(s.presets);
   var fx = s.fix || {};
   sheetFix = (fx.mode === 'pad' || fx.mode === 'crop') ? fx.mode : 'none';
