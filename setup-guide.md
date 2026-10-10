@@ -12,6 +12,18 @@ Globify is a self-contained browser application. Once you have extracted the fol
 
 You do not need GitHub Pages, Git, Node, npm, Python, an extension, or administrator rights.
 
+## Getting the ZIP file
+
+Everything below starts with "the Globify ZIP file", so here's where it comes from. It's not hidden, just not labelled as a download.
+
+1. Go to the project page on GitHub: [github.com/TABARC-Code/globified](https://github.com/TABARC-Code/globified).
+2. Click the green **Code** button near the top right of the file list.
+3. Choose **Download ZIP** at the bottom of the menu that opens.
+
+Your browser saves a file called something like `globified-main.zip`. That's the one. You don't need a GitHub account for this, and you can ignore the clone and HTTPS options in that menu entirely. They're for people using Git.
+
+If you only ever want to use Globify in a browser and not keep a copy, you can skip all of this and use a GitHub Pages link instead, if someone has published one. The README explains how to publish your own.
+
 ## First-time setup on Windows
 
 1. Download the Globify ZIP file.
