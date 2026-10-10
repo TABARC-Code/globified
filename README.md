@@ -91,10 +91,11 @@ It is a composition tool, not a gravity simulator. One moon is intentional for n
 | --- | --- |
 | Rotate | Drag, or use the arrow keys |
 | Pan | Shift-drag, right-drag or two-finger drag |
-| Zoom | Mouse wheel or pinch |
-| Re-centre | Double-click the globe or click **Centre the globe** |
+| Zoom | Mouse wheel, pinch, or the `+` and `-` keys |
+| Re-centre | Double-click the globe or click **Centre the globe**. `0` resets the whole view |
 | Close export preview | Click **Close** or press Escape |
 | Load a layer or moon map | Click its button, or drop the file straight onto it |
+| Load anything from the keyboard | Tab to its button and press Enter or Space |
 | Cancel a GIF or video export | Click **Cancel** on the progress card, or press Escape |
 | Show all of this in the app | Press `?`, or **Controls and shortcuts** under View |
 | Fold a panel section away | Click its heading, or Tab to it and press Enter |
@@ -102,6 +103,8 @@ It is a composition tool, not a gravity simulator. One moon is intentional for n
 The panel comes in five sections: Map, Layers, Moon, Globe and view, and Save and export. Layers and Moon start folded, because most globes don't need them. The Layers heading tells you how many are loaded, so a folded section can't hide the fact that something is in it. Your browser remembers which sections you leave open.
 
 Drop a file anywhere else and it becomes the base map. On a phone held upright, the globe pulls back so the whole planet fits. Zoom yourself and it stops second-guessing you; **Reset view** hands control back.
+
+Exports are named after your map, so `Aerth.png` gives you `Aerth-view.png`, `Aerth-turn-480px-60f.gif` and so on, rather than a pile of `globe-view (7).png`.
 
 The GIF exporter offers 320, 480 and 640 pixel frames, plus 36, 60 or 90 frames per turn. GIF is old and limited to 256 colours, but it still travels well. Dither can soften colour bands at the cost of a larger file.
 

@@ -504,8 +504,8 @@
     <dl>
       <dt>Rotate</dt><dd>Drag the globe, or the arrow keys</dd>
       <dt>Pan</dt><dd>Shift-drag, right-drag, or two-finger drag</dd>
-      <dt>Zoom</dt><dd>Mouse wheel, or pinch</dd>
-      <dt>Re-centre</dt><dd>Double-click the globe, or Centre the globe</dd>
+      <dt>Zoom</dt><dd>Mouse wheel, pinch, or <kbd>+</kbd> and <kbd>-</kbd></dd>
+      <dt>Re-centre</dt><dd>Double-click the globe, or Centre the globe. <kbd>0</kbd> resets the whole view</dd>
       <dt>Base map</dt><dd>Choose it, drop it anywhere, or paste it</dd>
       <dt>Layer or moon</dt><dd>Its button, or drop the file onto that button</dd>
       <dt>Cancel export</dt><dd><kbd>Esc</kbd> while it runs</dd>
@@ -659,6 +659,12 @@ scene.add(stars);
 --------------------------------------------------------------- */
 var sourceImg = null;      // what the globe paints from: the original, or a fixed copy
 var rawBase = null, rawBaseName = 'map';
+// Exports carry the map's name, so three planets saved in a row don't all
+// arrive as globe-view.png, globe-view (1).png and globe-view (2).png.
+function exportName(suffix){
+  var base = rawBase ? String(rawBaseName).replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) : '';
+  return (base || 'globe') + '-' + suffix;
+}
 // Crop and pad. 'pad' only touches sheets wider than 2:1, 'crop' only taller ones.
 // Cropping the sides off a wide sheet would cut longitude and break the wrap, so
 // that option simply does not exist. Some mistakes deserve to be impossible.
@@ -1385,7 +1391,7 @@ function exportGIF(){
   return chain.then(function(){
     var bytes = gif.finish();
     var blob = new Blob([bytes], {type:'image/gif'});
-    var name = 'globe-turn-' + S + 'px-' + N + 'f.gif';
+    var name = exportName('turn-' + S + 'px-' + N + 'f.gif');
     restore();
     deliver(blob, name, N + ' frames · ' + (bytes.length/1048576).toFixed(2) + ' MB · ' + gifSecs + 's per turn');
     $('gifHint').textContent = 'Saved ' + N + ' frames, ' + (bytes.length/1048576).toFixed(2) + ' MB.';
@@ -1461,7 +1467,7 @@ function exportVideo(){
     var type = videoType.split(';')[0];
     var blob = new Blob(chunks, {type:type});
     var ext = type === 'video/mp4' ? 'mp4' : 'webm';
-    var name = 'globe-turn-' + S + 'px-' + gifSecs + 's.' + ext;
+    var name = exportName('turn-' + S + 'px-' + gifSecs + 's.' + ext);
     restore();
     if (!blob.size) throw new Error('the recorder produced an empty file');
     deliver(blob, name, N + ' frames · ' + (blob.size/1048576).toFixed(2) + ' MB · ' + gifSecs + 's per turn');
@@ -1680,6 +1686,19 @@ document.documentElement.style.setProperty('--drawer-h','62px');
 
 // file loading
 var fileInput = $('file'), loadTxt = $('loadTxt'), loadBtn = $('load'), rSrc = $('rSrc');
+
+// Every file button is a <label> for a hidden file input. Labels can't take
+// focus, so Tab skipped all of them: a keyboard user could not load a map, a
+// layer, the moon or a project. Make each one a proper focusable button.
+Array.prototype.forEach.call(document.querySelectorAll('label[for]'), function(label){
+  var input = document.getElementById(label.htmlFor);
+  if (!input || input.type !== 'file') return;
+  label.tabIndex = 0;
+  label.setAttribute('role', 'button');
+  label.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); input.click(); }
+  });
+});
 
 function imgW(i){ return i.naturalWidth || i.width || 0; }
 function imgH(i){ return i.naturalHeight || i.height || 0; }
@@ -2011,7 +2030,7 @@ $('cropPos').addEventListener('input', function(){
 $('fixSave').addEventListener('click', function(){
   if (!sourceImg || sourceImg === rawBase) return;
   canvasToBlob(sourceImg, 'image/png').then(function(b){
-    deliver(b, rawBaseName + '-2x1.png', imgW(sourceImg) + '×' + imgH(sourceImg) + ' · 2:1 sheet');
+    deliver(b, exportName('2x1.png'), imgW(sourceImg) + '×' + imgH(sourceImg) + ' · 2:1 sheet');
   });
 });
 
@@ -2287,7 +2306,7 @@ $('projectFile').addEventListener('change', function(){
 $('save').addEventListener('click', function(){
   renderer.render(scene, camera);
   canvasToBlob(renderer.domElement, 'image/png').then(function(b){
-    deliver(b, 'globe-view.png', 'Still frame');
+    deliver(b, exportName('view.png'), 'Still frame');
   });
 });
 
@@ -2346,6 +2365,11 @@ window.addEventListener('keydown', function(e){
   if (!document.getElementById('sheet').hidden || exporting) return;
   if (e.key === '?'){ if ($('help').hidden) openHelp(); else closeHelp(); return; }
   if (!$('help').hidden) return;
+  // Keyboard zoom. The wheel and pinch were the only way in or out, which left
+  // keyboard users with whatever distance they started at. 0 resets the view.
+  if (e.key === '+' || e.key === '='){ distTarget = clamp(distTarget * 0.9, 1.55, 8); userZoomed = true; return; }
+  if (e.key === '-' || e.key === '_'){ distTarget = clamp(distTarget / 0.9, 1.55, 8); userZoomed = true; return; }
+  if (e.key === '0'){ resetView(); return; }
   var step = 0.06;
   if (e.key === 'ArrowLeft')  { yaw -= step; vYaw = 0; }
   if (e.key === 'ArrowRight') { yaw += step; vYaw = 0; }
