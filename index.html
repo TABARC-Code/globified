@@ -257,14 +257,14 @@
 
   .seg.two{grid-template-columns:repeat(2,1fr)}
   .gap{margin-top:9px}
-  #center,#ideal,#tmpl,#gif,#video,#saveProject,.action{
+  #center,#ideal,#tmpl,#gif,#video,#frames,#saveProject,.action{
     width:100%;padding:11px;cursor:pointer;margin-top:10px;
     background:none;border:1px solid var(--rule);color:var(--brass);
     font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-weight:700;font-size:13px;letter-spacing:.02em;
   }
   #center{margin-top:0}
-  #center:hover,#ideal:hover,#tmpl:hover,#gif:hover,#video:hover,#saveProject:hover,.action:hover{background:rgba(200,155,74,.12)}
-  #gif:disabled,#video:disabled,#ideal:disabled{opacity:.4;cursor:default}
+  #center:hover,#ideal:hover,#tmpl:hover,#gif:hover,#video:hover,#frames:hover,#saveProject:hover,.action:hover{background:rgba(200,155,74,.12)}
+  #gif:disabled,#video:disabled,#frames:disabled,#ideal:disabled{opacity:.4;cursor:default}
   #save{
     width:100%;padding:12px;margin-top:2px;cursor:pointer;
     background:var(--brass);border:none;color:var(--void);
@@ -492,8 +492,10 @@
     </div>
     <button id="gif">Export a full turn as GIF</button>
     <button id="video">Export a full turn as video</button>
+    <button id="frames">Export frames as a PNG sequence (zip)</button>
     <p class="hint" id="gifHint"></p>
-    <p class="hint">Video uses the same size and seconds per turn, at 30 fps, and records in real time. Keep the tab in front while it runs. No transparency; that is still GIF's one party trick.</p>
+    <p class="hint">Video uses the same size and seconds per turn, at 30 fps, and records in real time. Keep the tab in front while it runs. No transparency there.</p>
+    <p class="hint">The PNG sequence uses the GIF size and frame count, one numbered PNG per frame in a zip. It keeps full colour and proper soft transparency, so it's the one to use for video editors and compositing.</p>
   </div>
 
   <div class="row">
@@ -1360,9 +1362,87 @@ function setExportButtons(busy){
   var none = !rawBase;
   $('gif').disabled = busy || none;
   $('video').disabled = busy || none || !videoType;
+  $('frames').disabled = busy || none;
   $('save').disabled = none;
   if (none) $('gifHint').textContent = 'Load a map first. The exports need something to spin.';
   else if ($('gifHint').textContent.indexOf('Load a map first') === 0) $('gifHint').textContent = '';
+}
+
+// A minimal ZIP writer: 'stored', no compression. PNGs are already compressed,
+// so deflating them again would cost time and save next to nothing, and it
+// keeps this to a few dozen lines instead of a bundled library.
+var CRC_TABLE = (function(){
+  var t = new Uint32Array(256);
+  for (var n=0;n<256;n++){ var c = n; for (var k=0;k<8;k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(u8){
+  var c = 0xFFFFFFFF;
+  for (var i=0;i<u8.length;i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function makeZip(files){   // files: [{name, data:Uint8Array}]
+  var parts = [], central = [], offset = 0, now = new Date();
+  var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  var dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  function header(size){ var b = new DataView(new ArrayBuffer(size)); return b; }
+  files.forEach(function(f){
+    var name = new TextEncoder().encode(f.name), crc = crc32(f.data), n = f.data.length;
+    var h = header(30);
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0, true); h.setUint16(8, 0, true);
+    h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true);
+    h.setUint32(18, n, true); h.setUint32(22, n, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(h.buffer, name, f.data);
+    var c = header(46);
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0, true);
+    c.setUint16(10, 0, true); c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true);
+    c.setUint32(20, n, true); c.setUint32(24, n, true); c.setUint16(28, name.length, true);
+    c.setUint16(30, 0, true); c.setUint16(32, 0, true); c.setUint16(34, 0, true); c.setUint16(36, 0, true);
+    c.setUint32(38, 0, true); c.setUint32(42, offset, true);
+    central.push(c.buffer, name);
+    offset += 30 + name.length + n;
+  });
+  var cdSize = central.reduce(function(a, x){ return a + (x.byteLength || x.length); }, 0);
+  var e = header(22);
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+  return new Blob(parts.concat(central, [e.buffer]), {type:'application/zip'});
+}
+
+function exportFrames(){
+  if (exporting) return Promise.resolve();
+  exporting = true;
+  cancelExport = false; $('progCancel').disabled = false;
+  setExportButtons(true);
+  showProgress(true, 'Rendering frames', 0);
+
+  var S = gifSize, N = gifFrames, transparent = toggleState('tAlpha');
+  var cap = beginCapture(S, transparent), files = [], digits = String(N - 1).length;
+  function restore(){ exporting = false; setExportButtons(false); showProgress(false); cap.restore(); }
+
+  var chain = Promise.resolve();
+  for (var f=0; f<N; f++){
+    (function(f){
+      chain = chain.then(function(){
+        cap.draw(f/N);
+        return canvasToBlob(cap.canvas, 'image/png');
+      }).then(function(b){ return b.arrayBuffer(); }).then(function(buf){
+        var num = String(f); while (num.length < Math.max(3, digits)) num = '0' + num;
+        files.push({name: 'frame_' + num + '.png', data: new Uint8Array(buf)});
+        return yieldUI(f, N, 'Rendering frames');
+      });
+    })(f);
+  }
+  return chain.then(function(){
+    var blob = makeZip(files);
+    var name = exportName('turn-' + S + 'px-' + N + 'f-png.zip');
+    restore();
+    deliver(blob, name, N + ' PNG frames · ' + (blob.size/1048576).toFixed(2) + ' MB' + (transparent ? ' · transparent' : ''));
+    $('gifHint').textContent = 'Saved ' + N + ' PNG frames, ' + (blob.size/1048576).toFixed(2) + ' MB.';
+  }).catch(function(e){
+    restore();
+    $('gifHint').textContent = e === CANCELLED ? 'PNG sequence cancelled. Nothing saved.' : 'PNG sequence failed: ' + ((e && e.message) || e);
+  });
 }
 
 function exportGIF(){
@@ -2123,6 +2203,7 @@ $('gifSecs').addEventListener('input', function(){
 });
 $('gif').addEventListener('click', exportGIF);
 $('video').addEventListener('click', exportVideo);
+$('frames').addEventListener('click', exportFrames);
 setExportButtons(false);
 if (!videoType){
   $('video').disabled = true;
