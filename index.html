@@ -268,7 +268,7 @@
   }
   #center{margin-top:0}
   #center:hover,#ideal:hover,#tmpl:hover,#gif:hover,#video:hover,#frames:hover,#saveProject:hover,.action:hover{background:rgba(200,155,74,.12)}
-  #gif:disabled,#video:disabled,#frames:disabled,#ideal:disabled{opacity:.4;cursor:default}
+  #gif:disabled,#video:disabled,#frames:disabled,#ideal:disabled,#tmpl:disabled{opacity:.4;cursor:default}
   #save{
     width:100%;padding:12px;margin-top:2px;cursor:pointer;
     background:var(--brass);border:none;color:var(--void);
@@ -544,7 +544,7 @@
     <div class="label" id="sheetCap">Result</div>
     <div id="sheetPreview"></div>
     <a id="sheetDl" download target="_blank" rel="noopener">Download</a>
-    <p class="hint">If the download button does nothing, press and hold the image above and choose Save image. Some viewers block downloads from an embedded frame.</p>
+    <p class="hint" id="sheetHint"></p>
     <button id="sheetClose">Close</button>
   </div>
 </div>
@@ -1006,12 +1006,25 @@ function buildTemplate(){
   return {canvas:c, w:W, h:H};
 }
 
+// The template takes a few seconds to draw and encode, and the button used to
+// sit there looking unpressed, which invites a second and third click.
 function downloadTemplate(){
+  var btn = $('tmpl');
+  if (btn.disabled) return;
+  btn.disabled = true; btn.textContent = 'Drawing the template…';
+  setTimeout(function(){ buildAndDeliverTemplate(btn); }, 30);   // let the label paint first
+}
+function buildAndDeliverTemplate(btn){
   var t = buildTemplate();
   var name = 'map-template-' + (projection==='merc'?'mercator':'equirectangular')
            + '-' + t.w + 'x' + t.h + '.png';
+  var label = 'Download a template for these settings';
   canvasToBlob(t.canvas, 'image/png').then(function(b){
     deliver(b, name, 'Drawing template · ' + t.w + ' × ' + t.h);
+    btn.disabled = false; btn.textContent = label;
+  }).catch(function(){
+    btn.textContent = 'Template failed. Try again';
+    setTimeout(function(){ btn.disabled = false; btn.textContent = label; }, 2500);
   });
 }
 
@@ -1264,6 +1277,13 @@ function deliver(blob, filename, caption){
   dl.textContent = 'Save ' + filename;
 
   document.getElementById('sheetCap').textContent = caption;
+  // The fallback tip used to say 'press and hold the image' for videos, zips and
+  // JSON files too. Say the right thing for what's actually being saved.
+  document.getElementById('sheetHint').textContent = type.indexOf('image/') === 0
+    ? 'If the button does nothing, press and hold the image above and choose Save image. Some viewers block downloads from an embedded frame.'
+    : type.indexOf('video/') === 0
+    ? 'If the button does nothing, open the video\'s menu (the three dots) and choose Download. Some viewers block downloads from an embedded frame.'
+    : 'If the button does nothing, your viewer is probably blocking downloads from an embedded frame. Open Globify in a normal browser tab and try again.';
   lastFocus = document.activeElement;
   document.getElementById('sheet').hidden = false;
   document.getElementById('sheetClose').focus();
