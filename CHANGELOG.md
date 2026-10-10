@@ -4,6 +4,15 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part eleven: sliders that keep up
+
+### Better
+
+- **Opacity sliders are fast on big maps.** Every repaint used to re-project every sheet onto the globe: 1,024 strips each, sampled from images that can be 8K wide. That happened even when all you'd touched was an opacity slider, which doesn't change the geometry at all. Now each sheet keeps its projected copy, and an opacity change just blends the copies. The full projection only re-runs when something geometric changes: a new image, the span, the projection, the caps, or a crop or pad. Night lights and relief only repaint on those changes too, since their opacity is just a material setting.
+- Measured on an 8K map with four layers: an opacity step went from about 140 ms of script time to under a tenth of a millisecond. A 100-step drag went from 21.3 s to 13.6 s wall clock. That was in a headless browser with software 3D, where uploading the texture dominates what's left, so a real graphics card should do better than that. I can't prove it here, though.
+- The trade: a full reprojection is about 30% slower than before (132 ms to 171 ms), because each layer gets projected into its own copy. Opacity is what people drag, so that's the right way round.
+- I checked the output too. Rendered frames match the old version to within 3 levels out of 255, on a handful of pixels: rounding, not a visible change. This is the CPU-side version of the "draw layers on the graphics card" idea. It got most of the win without rewriting any shaders.
+
 ## October 2026, part ten: layer presets
 
 ### New

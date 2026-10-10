@@ -172,7 +172,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 ## Limits worth knowing
 
 - You need a modern browser with WebGL enabled.
-- Large source images and long 640 px GIFs can be slow, especially on phones.
+- Large source images and long 640 px GIFs can be slow, especially on phones. Layer opacity sliders stay quick even on 8K maps. Changes that alter the geometry (span, projection, caps, crop or pad) still redo the full projection, so they take a moment on very large sheets.
 - Video export records in real time and needs the tab to stay in front.
 - Crop and pad make a full-size copy of the map. Safari caps how big a canvas can be, so on Safari a very large map (roughly above 5,800 × 2,900) may come out blank when cropped or padded. I haven't been able to test that on a real Safari, so treat it as a warning, not a measurement. Chrome and Firefox allow far larger.
 - All layers are static images. There is no timeline, animation system or live weather data.
