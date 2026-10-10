@@ -104,6 +104,8 @@ The panel comes in five sections: Map, Layers, Moon, Globe and view, and Save an
 
 Drop a file anywhere else and it becomes the base map. On a phone held upright, the globe pulls back so the whole planet fits. Zoom yourself and it stops second-guessing you; **Reset view** hands control back.
 
+**Save this view as PNG** saves exactly what you can see, beside or above the panel, at your screen's resolution. If you want a square, centred, panel-free picture, a one-frame-per-turn GIF or the video is the better tool.
+
 Exports are named after your map, so `Aerth.png` gives you `Aerth-view.png`, `Aerth-turn-480px-60f.gif` and so on, rather than a pile of `globe-view (7).png`.
 
 The GIF exporter offers 320, 480 and 640 pixel frames, plus 36, 60 or 90 frames per turn. GIF is old and limited to 256 colours, but it still travels well. Dither can soften colour bands at the cost of a larger file.

@@ -4,6 +4,12 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part nine: the PNG you actually saw
+
+### Fixed
+
+- **Saved PNGs were off-centre.** The 3D canvas fills the whole window, and the panel sits over part of it, so the globe gets nudged sideways to stay in view. The PNG grabbed the entire canvas, panel area included. At 1366 px wide that put the planet 181 px off-centre beside a strip of empty stars nobody had seen. It now saves only the visible part. On a phone it stops at the top of the panel. The planet lands where you framed it, give or take a few pixels of honest perspective.
+
 ## October 2026, part eight: the keyboard gets the whole app
 
 ### Fixed
