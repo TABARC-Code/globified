@@ -2214,33 +2214,46 @@ function projectState(){
       stars:toggleState('tStars'), atmosphere:toggleState('tAtmo'), transparent:toggleState('tAlpha'),
       dither:toggleState('tDither'), keepFraming:toggleState('tFrame')}};
 }
+// Project files can be hand-edited, half-saved or from an older build, and they
+// also feed the remembered settings, so one bad value used to stick around on
+// every reload ('±NaN°'). Every number is checked here, once, at the door.
+function num(v, def, lo, hi){
+  if (v === null || v === '' || typeof v === 'boolean') return def;   // +null is 0, not NaN
+  v = +v;
+  return isFinite(v) ? clamp(v, lo, hi) : def;
+}
+function pick(v, allowed, def){ return allowed.indexOf(v) >= 0 ? v : def; }
+function colour(v, def){ return /^#[0-9a-f]{6}$/i.test(v || '') ? v : def; }
+
 function applyProject(s){
   if (!s || (s.version !== 3 && s.version !== 4)) throw new Error('That is not a Globify v3 or v4 settings project.');
   if (s.projection !== 'equi' && s.projection !== 'merc') throw new Error('Unknown map projection.');
-  projection = s.projection; setSpan(s.spanDeg);
+  projection = s.projection; setSpan(num(s.spanDeg, 90, 20, 90));
   Array.prototype.forEach.call($('proj').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.proj === projection)); });
-  $('seam').value = s.seam || 0; $('seam').dispatchEvent(new Event('input'));
-  $('tilt').value = s.tilt == null ? 23.5 : s.tilt; $('tilt').dispatchEvent(new Event('input'));
-  $('spin').value = s.spin == null ? 30 : s.spin; $('spin').dispatchEvent(new Event('input'));
-  capMode = s.capMode || 'solid'; $('capNorth').value = s.capNorth || '#1b2942'; $('capSouth').value = s.capSouth || '#1b2942';
+  $('seam').value = num(s.seam, 0, -180, 180); $('seam').dispatchEvent(new Event('input'));
+  $('tilt').value = num(s.tilt, 23.5, 0, 45); $('tilt').dispatchEvent(new Event('input'));
+  $('spin').value = num(s.spin, 30, 0, 100); $('spin').dispatchEvent(new Event('input'));
+  capMode = pick(s.capMode, ['solid','edge','custom'], 'solid');
+  $('capNorth').value = colour(s.capNorth, '#1b2942'); $('capSouth').value = colour(s.capSouth, '#1b2942');
   Array.prototype.forEach.call($('caps').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.cap === capMode)); });
   $('capColours').hidden = capMode !== 'custom';
   Object.keys(layers).forEach(function(k){
-    var v = s.layers && s.layers[k] != null ? s.layers[k] : Math.round(layers[k].opacity*100);
+    var v = num(s.layers && s.layers[k], Math.round(layers[k].opacity*100), 0, 100);
     $('opacity-' + k).value = v; $('opacity-' + k).dispatchEvent(new Event('input'));
   });
   var m = s.moon || {};
-  moon.size = m.size == null ? .22 : clamp(+m.size,.08,.45);
-  moon.distance = m.distance == null ? 1.65 : clamp(+m.distance,1.15,2.4);
-  moon.orbit = m.orbit == null ? 42 : +m.orbit;
-  moon.tilt = m.tilt == null ? 18 : clamp(+m.tilt,-60,60);
+  moon.size = num(m.size, .22, .08, .45);
+  moon.distance = num(m.distance, 1.65, 1.15, 2.4);
+  moon.orbit = Math.round(num(m.orbit, 42, 0, 360));
+  moon.tilt = Math.round(num(m.tilt, 18, -60, 60));
   $('moonSize').value = Math.round(moon.size*100); $('moonSizeNum').textContent = Math.round(moon.size*100) + '%';
   $('moonDistance').value = Math.round(moon.distance*100); $('moonDistanceNum').textContent = moon.distance.toFixed(2) + ' r';
   $('moonOrbit').value = moon.orbit; $('moonOrbitNum').textContent = moon.orbit + '°';
   $('moonTilt').value = moon.tilt; $('moonTiltNum').textContent = moon.tilt + '°';
   setToggle('tMoon', !!m.visible);
   updateMoon();
-  gifSize = s.gifSize || gifSize; gifFrames = s.gifFrames || gifFrames; gifSecs = s.gifSecs || gifSecs;
+  gifSize = pick(+s.gifSize, [320,480,640], gifSize); gifFrames = pick(+s.gifFrames, [36,60,90], gifFrames);
+  gifSecs = Math.round(num(s.gifSecs, gifSecs, 2, 15));
   Array.prototype.forEach.call($('gifSize').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.s === gifSize)); });
   Array.prototype.forEach.call($('gifFrames').querySelectorAll('button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.f === gifFrames)); });
   $('gifSecs').value = gifSecs; $('gifSecs').dispatchEvent(new Event('input'));
@@ -2250,7 +2263,7 @@ function applyProject(s){
   setToggle('tFrame', t.keepFraming);
   var fx = s.fix || {};
   sheetFix = (fx.mode === 'pad' || fx.mode === 'crop') ? fx.mode : 'none';
-  cropPos = fx.cropPos == null ? .5 : clamp(+fx.cropPos, 0, 1);
+  cropPos = num(fx.cropPos, .5, 0, 1);
   $('cropPos').value = Math.round(cropPos*100); cropLabel();
   rebuildSheets(false);
 }
