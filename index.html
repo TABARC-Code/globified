@@ -124,6 +124,14 @@
   .row .label{display:block;margin-bottom:9px}
   /* Collapsible sections. Native <details>, so keyboard and screen readers get it for free. */
   .group{border-top:1px solid var(--drawer-rule)}
+  #presetPick,#presetName{width:100%;padding:9px 10px;background:rgba(255,244,220,.045);color:var(--drawer-ink);
+    border:1px solid var(--drawer-rule);font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-size:14px}
+  #presetPick option,#presetPick optgroup{background:#302A24;color:var(--drawer-ink)}
+  #presetName{flex:2;min-width:120px}
+  .presets{margin-top:14px}
+  .presets .minirow{align-items:stretch}
+  .presets .minirow .action{margin-top:0;min-width:72px;flex:1}
+  #presetPick:focus-visible,#presetName:focus-visible{outline:2px solid var(--verdigris);outline-offset:1px}
   .group summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;
     padding:15px 0;font-family:'Atkinson Hyperlegible',Arial,sans-serif;font-weight:700;font-size:13px;
     letter-spacing:.09em;text-transform:uppercase;color:var(--brass)}
@@ -378,6 +386,16 @@
       <div class="layer"><div class="layer-title"><span class="label">Clouds</span></div><label class="buttonlike" id="load-clouds" for="file-clouds">Add cloud sheet</label><input type="file" id="file-clouds" accept="image/*"><div class="slide"><input type="range" id="opacity-clouds" min="0" max="100" value="70" aria-label="Clouds opacity"><span class="num">70%</span></div></div>
       <div class="layer"><div class="layer-title"><span class="label">Night lights</span></div><label class="buttonlike" id="load-night" for="file-night">Add night lights</label><input type="file" id="file-night" accept="image/*"><div class="slide"><input type="range" id="opacity-night" min="0" max="100" value="80" aria-label="Night lights opacity"><span class="num">80%</span></div></div>
       <div class="layer"><div class="layer-title"><span class="label">Height map</span></div><label class="buttonlike" id="load-height" for="file-height">Add height map</label><input type="file" id="file-height" accept="image/*"><div class="slide"><input type="range" id="opacity-height" min="0" max="100" value="20" aria-label="Relief strength"><span class="num">20%</span></div></div>
+    </div>
+    <div class="presets">
+      <span class="label">Layer presets</span>
+      <select id="presetPick" aria-label="Layer preset"></select>
+      <div class="minirow">
+        <input type="text" id="presetName" maxlength="40" placeholder="Name this mix" aria-label="Preset name">
+        <button class="action" id="presetSave">Save</button>
+        <button class="action" id="presetDelete" disabled>Delete</button>
+      </div>
+      <p class="hint" id="presetMsg" aria-live="polite">A preset is a mix of layer opacities, plus whether Sunlight is on. It never stores images.</p>
     </div>
     <p class="hint">Drop a file on a layer's button to load it there. All sheets use the same projection, latitude span and seam. Transparent PNGs are ideal. Night lights are an artistic overlay, not a NASA simulator.</p>
   </div>
@@ -2225,13 +2243,103 @@ function setToggle(id, on){
   var b = $(id);
   if (toggleState(id) !== !!on) b.click();
 }
+// Layer presets. A preset is a named mix of the six layer opacities, plus the
+// Sunlight switch, since night lights and relief need it to show at all. The
+// built-ins are fixed; your own live in project JSON (and so in the remembered
+// settings), never with images. Names are the key: saving a name again updates it.
+var LAYER_KEYS = ['labels','borders','biomes','clouds','night','height'];
+var BUILTIN_PRESETS = [
+  {name:'Everything',  o:{labels:100, borders:100, biomes:65, clouds:70, night:80,  height:20}},
+  {name:'Political',   o:{labels:100, borders:100, biomes:0,  clouds:0,  night:0,   height:0},  sun:false},
+  {name:'Physical',    o:{labels:0,   borders:0,   biomes:65, clouds:0,  night:0,   height:35}, sun:true},
+  {name:'Weather',     o:{labels:0,   borders:0,   biomes:40, clouds:90, night:0,   height:15}, sun:true},
+  {name:'Night side',  o:{labels:0,   borders:30,  biomes:0,  clouds:30, night:100, height:0},  sun:true},
+  {name:'Bare map',    o:{labels:0,   borders:0,   biomes:0,  clouds:0,  night:0,   height:0}}
+];
+var userPresets = [];
+
+function cleanPreset(p){
+  if (!p || typeof p.name !== 'string') return null;
+  var name = p.name.trim().slice(0, 40);
+  if (!name) return null;
+  var o = {};
+  LAYER_KEYS.forEach(function(k){ o[k] = Math.round(num(p.o && p.o[k], 0, 0, 100)); });
+  var out = {name:name, o:o};
+  if (typeof p.sun === 'boolean') out.sun = p.sun;
+  return out;
+}
+function mergePresets(list){
+  if (!Array.isArray(list)) return;
+  list.slice(0, 50).forEach(function(raw){
+    var p = cleanPreset(raw); if (!p) return;
+    var i = userPresets.findIndex(function(q){ return q.name === p.name; });
+    if (i >= 0) userPresets[i] = p; else userPresets.push(p);
+  });
+  renderPresets();
+}
+function renderPresets(selected){
+  var sel = $('presetPick'), keep = selected != null ? selected : sel.value;
+  sel.innerHTML = '';
+  var first = document.createElement('option'); first.value = ''; first.textContent = 'Choose a preset…'; sel.appendChild(first);
+  [['Built in', BUILTIN_PRESETS, 'b:'], ['Yours', userPresets, 'u:']].forEach(function(g){
+    if (!g[1].length) return;
+    var og = document.createElement('optgroup'); og.label = g[0];
+    g[1].forEach(function(p){ var o = document.createElement('option'); o.value = g[2] + p.name; o.textContent = p.name; og.appendChild(o); });
+    sel.appendChild(og);
+  });
+  sel.value = Array.prototype.some.call(sel.options, function(o){ return o.value === keep; }) ? keep : '';
+  $('presetDelete').disabled = sel.value.indexOf('u:') !== 0;
+}
+function findPreset(v){
+  var list = v.indexOf('b:') === 0 ? BUILTIN_PRESETS : userPresets, name = v.slice(2);
+  for (var i=0;i<list.length;i++) if (list[i].name === name) return list[i];
+  return null;
+}
+function applyPreset(p){
+  LAYER_KEYS.forEach(function(k){
+    $('opacity-' + k).value = p.o[k];
+    $('opacity-' + k).dispatchEvent(new Event('input'));
+  });
+  if (typeof p.sun === 'boolean') setToggle('tSun', p.sun);
+  var loaded = LAYER_KEYS.filter(function(k){ return layers[k].raw; }).length;
+  $('presetMsg').textContent = 'Applied ' + p.name + '.' + (loaded ? '' : ' No layers are loaded yet, so you will see it once you add some.');
+}
+$('presetPick').addEventListener('change', function(){
+  $('presetDelete').disabled = this.value.indexOf('u:') !== 0;
+  var p = this.value && findPreset(this.value);
+  if (p){ applyPreset(p); if (this.value.indexOf('u:') === 0) $('presetName').value = p.name; }
+});
+$('presetSave').addEventListener('click', function(){
+  var name = $('presetName').value.trim().slice(0, 40);
+  if (!name){ $('presetMsg').textContent = 'Give the mix a name first.'; $('presetName').focus(); return; }
+  if (BUILTIN_PRESETS.some(function(p){ return p.name.toLowerCase() === name.toLowerCase(); })){
+    $('presetMsg').textContent = name + ' is a built-in name. Pick another, so the built-in stays put.'; return;
+  }
+  var o = {};
+  LAYER_KEYS.forEach(function(k){ o[k] = Math.round(layers[k].opacity * 100); });
+  var existed = userPresets.some(function(q){ return q.name === name; });
+  mergePresets([{name:name, o:o, sun:toggleState('tSun')}]);
+  renderPresets('u:' + name);
+  $('presetMsg').textContent = (existed ? 'Updated ' : 'Saved ') + name + '. It lives in this browser and in any project file you save.';
+});
+$('presetName').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); $('presetSave').click(); } });
+$('presetDelete').addEventListener('click', function(){
+  var v = $('presetPick').value; if (v.indexOf('u:') !== 0) return;
+  var name = v.slice(2);
+  userPresets = userPresets.filter(function(q){ return q.name !== name; });
+  renderPresets('');
+  $('presetName').value = '';
+  $('presetMsg').textContent = 'Deleted ' + name + '.';
+});
+renderPresets();
+
 function projectState(){
   var layerState = {};
   Object.keys(layers).forEach(function(k){ layerState[k] = Math.round(layers[k].opacity*100); });
   return {version:4, projection:projection, spanDeg:spanDeg, seam:+$('seam').value,
     tilt:+$('tilt').value, spin:+$('spin').value, capMode:capMode,
     capNorth:$('capNorth').value, capSouth:$('capSouth').value,
-    layers:layerState, fix:{mode:sheetFix, cropPos:cropPos}, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
+    layers:layerState, presets:userPresets, fix:{mode:sheetFix, cropPos:cropPos}, moon:{visible:moon.visible, size:moon.size, distance:moon.distance, orbit:moon.orbit, tilt:moon.tilt}, gifSize:gifSize, gifFrames:gifFrames,
     gifSecs:gifSecs, toggles:{graticule:toggleState('tGrat'), sunlight:toggleState('tSun'),
       stars:toggleState('tStars'), atmosphere:toggleState('tAtmo'), transparent:toggleState('tAlpha'),
       dither:toggleState('tDither'), keepFraming:toggleState('tFrame')}};
@@ -2283,6 +2391,7 @@ function applyProject(s){
   setToggle('tGrat', t.graticule); setToggle('tSun', t.sunlight); setToggle('tStars', t.stars);
   setToggle('tAtmo', t.atmosphere); setToggle('tAlpha', t.transparent); setToggle('tDither', t.dither);
   setToggle('tFrame', t.keepFraming);
+  mergePresets(s.presets);
   var fx = s.fix || {};
   sheetFix = (fx.mode === 'pad' || fx.mode === 'crop') ? fx.mode : 'none';
   cropPos = num(fx.cropPos, .5, 0, 1);

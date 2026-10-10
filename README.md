@@ -77,6 +77,21 @@ Every layer must line up with the base map: same projection, latitude span, seam
 | Night lights | A light map | Visible with **Sunlight** on. It is a stylised glow, not a physics model. |
 | Height map | Greyscale relief | Visible with **Sunlight** on. Keep the opacity low unless you enjoy planets made of chewing gum. |
 
+### Layer presets
+
+Under the layers there's a **Layer presets** list. A preset is a mix of the six layer opacities, plus whether **Sunlight** is on, because night lights and relief don't show without it. It never stores images, so a preset only does something once you've loaded the layers it uses.
+
+| Built in | What you get |
+| --- | --- |
+| Everything | The starting opacities, all six layers on |
+| Political | Labels and borders only, flat light |
+| Physical | Biome tint and relief, with sunlight |
+| Weather | Clouds over a light biome tint, with sunlight |
+| Night side | Night lights with faint borders and cloud, with sunlight |
+| Bare map | Every layer off, just the base map |
+
+To keep your own, set the sliders, type a name and press **Save** (or Enter). Saving the same name again updates that preset. **Delete** removes one of yours. The built-ins can't be overwritten, so they're always there to get back to. Your presets are remembered in this browser and go into any project file you save. Loading someone else's project adds their presets to yours; it never deletes any.
+
 The order is fixed on purpose. Reorderable layers, blend modes and per-layer seams sound modest until they turn a compact map tool into a browser GIS project. That is future work, not an invisible promise.
 
 ## Moon
@@ -165,7 +180,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 
 ## Future ideas, maybe
 
-Three items off the old list are done: the seam checker, video export, and crop and pad. What's left, in rough order of usefulness: named layer presets, controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
+Three items off the old list are done: the seam checker, video export, and crop and pad. Named layer presets are done too. What's left, in rough order of usefulness: controlled blend modes, PNG sequences, and an optional File System Access workflow for reopening a project with its original images.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
