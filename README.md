@@ -184,7 +184,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 
 ## Future ideas, maybe
 
-Three items off the old list are done: the seam checker, video export, and crop and pad. Named layer presets are done too. PNG sequences are in as well. What's left: controlled blend modes, and an optional File System Access workflow for reopening a project with its original images.
+Most of the old list is done now: the seam checker, video export, crop and pad, layer presets and PNG sequences. Two things are left. One is controlled blend modes. The other is an optional File System Access workflow, so a project could reopen with its original images instead of asking for them again. That one only works in Chromium-based browsers, which is why it's still a maybe.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
