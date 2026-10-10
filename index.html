@@ -504,8 +504,8 @@
     <dl>
       <dt>Rotate</dt><dd>Drag the globe, or the arrow keys</dd>
       <dt>Pan</dt><dd>Shift-drag, right-drag, or two-finger drag</dd>
-      <dt>Zoom</dt><dd>Mouse wheel, or pinch</dd>
-      <dt>Re-centre</dt><dd>Double-click the globe, or Centre the globe</dd>
+      <dt>Zoom</dt><dd>Mouse wheel, pinch, or <kbd>+</kbd> and <kbd>-</kbd></dd>
+      <dt>Re-centre</dt><dd>Double-click the globe, or Centre the globe. <kbd>0</kbd> resets the whole view</dd>
       <dt>Base map</dt><dd>Choose it, drop it anywhere, or paste it</dd>
       <dt>Layer or moon</dt><dd>Its button, or drop the file onto that button</dd>
       <dt>Cancel export</dt><dd><kbd>Esc</kbd> while it runs</dd>
@@ -2365,6 +2365,11 @@ window.addEventListener('keydown', function(e){
   if (!document.getElementById('sheet').hidden || exporting) return;
   if (e.key === '?'){ if ($('help').hidden) openHelp(); else closeHelp(); return; }
   if (!$('help').hidden) return;
+  // Keyboard zoom. The wheel and pinch were the only way in or out, which left
+  // keyboard users with whatever distance they started at. 0 resets the view.
+  if (e.key === '+' || e.key === '='){ distTarget = clamp(distTarget * 0.9, 1.55, 8); userZoomed = true; return; }
+  if (e.key === '-' || e.key === '_'){ distTarget = clamp(distTarget / 0.9, 1.55, 8); userZoomed = true; return; }
+  if (e.key === '0'){ resetView(); return; }
   var step = 0.06;
   if (e.key === 'ArrowLeft')  { yaw -= step; vYaw = 0; }
   if (e.key === 'ArrowRight') { yaw += step; vYaw = 0; }
