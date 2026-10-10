@@ -4,6 +4,21 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part eight: the keyboard gets the whole app
+
+### Fixed
+
+- **You couldn't load anything from the keyboard.** Every file button is a label for a hidden file input, and labels can't take focus, so Tab skipped all of them: base map, six layers, the moon and project files. Unless you could paste an image, a keyboard user couldn't even start. The buttons now take focus and open the picker on Enter or Space. It's been like that since the first upload.
+
+### Better
+
+- **Keyboard zoom.** `+` and `-` zoom, and `0` resets the view. It's ignored while a slider or other control has focus, same as the arrow keys. The help overlay lists them.
+- **Exports are named after your map.** `Aerth.png` gives `Aerth-view.png`, `Aerth-turn-480px-60f.gif`, `Aerth-2x1.png` and so on. Odd characters get tidied into hyphens.
+
+### Tried and dropped
+
+I wanted to smooth out slider dragging on huge maps. On an 8K map each layer repaint costs about 50 ms, so I tried batching repaints into one per screen frame. Then I measured it: 100 drag events still gave 100 repaints, because each repaint is slow enough that only one event ever arrives per frame. It also added a frame of delay every time, and the whole drag took longer. So it's gone. A real fix means drawing the layers on the GPU instead, which is a bigger job and not one for a tidy-up round.
+
 ## October 2026, part seven: Tab stays put
 
 ### Fixed
