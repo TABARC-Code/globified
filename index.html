@@ -2313,7 +2313,29 @@ document.getElementById('sheet').addEventListener('click', function(e){
 });
 
 // keyboard nudge
+// Keep Tab inside whichever overlay is open. Without this, Tab walked straight
+// out of the help card (or the export result, or the progress card) into the
+// panel behind it, which a keyboard user can't see and shouldn't be poking.
+function openOverlay(){
+  var ids = ['prog','help','sheet'];
+  for (var i=0;i<ids.length;i++){ var el = document.getElementById(ids[i]); if (!el.hidden) return el; }
+  return null;
+}
+function trapTab(e){
+  var box = openOverlay(); if (!box) return false;
+  var f = Array.prototype.filter.call(
+    box.querySelectorAll('a[href],button,input,select,textarea,video[controls],[tabindex]:not([tabindex="-1"])'),
+    function(el){ return !el.disabled && !el.hidden && el.getClientRects().length; });
+  e.preventDefault();
+  if (!f.length) return true;
+  var i = f.indexOf(document.activeElement);
+  var next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i < 0 || i === f.length - 1 ? 0 : i + 1);
+  f[next].focus();
+  return true;
+}
+
 window.addEventListener('keydown', function(e){
+  if (e.key === 'Tab' && trapTab(e)) return;
   if (e.key === 'Escape' && exporting){ requestCancel(); return; }
   if (e.key === 'Escape' && !document.getElementById('sheet').hidden){ closeSheet(); return; }
   if (e.key === 'Escape' && !$('help').hidden){ closeHelp(); return; }
