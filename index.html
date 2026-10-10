@@ -2117,8 +2117,12 @@ moonControl('moonTilt', 'tilt', 1, '°', 0);
 ['dragleave','drop'].forEach(function(t){
   window.addEventListener(t, function(e){ e.preventDefault(); loadBtn.classList.remove('hot'); });
 });
+// A dropped project file used to be treated as an image and fail to decode.
+// Anything named .json now loads as settings; everything else is a base map.
 window.addEventListener('drop', function(e){
-  if (e.dataTransfer && e.dataTransfer.files.length) acceptFile(e.dataTransfer.files[0], null);
+  if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+  var f = e.dataTransfer.files[0];
+  if (isProjectFile(f)) loadProjectFile(f); else acceptFile(f, null);
 });
 
 // Drop onto a layer's (or the moon's) button to load it there. Before this,
@@ -2531,15 +2535,18 @@ function applyProject(s){
 $('saveProject').addEventListener('click', function(){
   deliver(new Blob([JSON.stringify(projectState(), null, 2)], {type:'application/json'}), 'globify-project.json', 'Globify settings project');
 });
-$('projectFile').addEventListener('change', function(){
-  var f = takeFile(this); if (!f) return;
-  // Report here, not on the base map's button: that one used to say 'add the map
-  // image again' while the map sat there, perfectly loaded, under the message.
+// Report here, not on the base map's button: that one used to say 'add the map
+// image again' while the map sat there, perfectly loaded, under the message.
+function loadProjectFile(f){
+  if (!f) return;
+  $('sec-export').open = true;   // the message lives there; make sure it's seen
   f.text().then(function(t){
     applyProject(JSON.parse(t));
     $('projectMsg').textContent = 'Loaded ' + f.name + '.' + (rawBase ? '' : ' Add the map image again; browsers will not quietly keep it.');
   }).catch(function(err){ $('projectMsg').textContent = 'Could not load ' + f.name + ': ' + err.message; });
-});
+}
+function isProjectFile(f){ return f && (/\.json$/i.test(f.name || '') || f.type === 'application/json'); }
+$('projectFile').addEventListener('change', function(){ loadProjectFile(takeFile(this)); });
 
 // save
 // Save what you can actually see. The canvas fills the window, but the panel
