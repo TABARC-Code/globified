@@ -92,7 +92,11 @@ Under the layers there's a **Layer presets** list. A preset is a mix of the six 
 
 To keep your own, set the sliders, type a name and press **Save** (or Enter). Saving the same name again updates that preset. **Delete** removes one of yours. The built-ins can't be overwritten, so they're always there to get back to. Your presets are remembered in this browser and go into any project file you save. Loading someone else's project adds their presets to yours; it never deletes any.
 
-The order is fixed on purpose. Reorderable layers, blend modes and per-layer seams sound modest until they turn a compact map tool into a browser GIS project. That is future work, not an invisible promise.
+### Blend modes
+
+Labels, borders, biomes and clouds each have a small mode picker next to their name: **Normal**, **Multiply**, **Screen**, **Overlay** or **Soft light**. They're the standard ones from any paint program. Multiply is the useful one for a biome tint, because it darkens the map underneath instead of painting over it. Screen suits clouds and glows. Night lights and the height map don't have one, because they work through the globe's lighting rather than as paint. Modes are saved in project files, and **Clear layers** puts them back to Normal (its undo puts them back too).
+
+The order is fixed on purpose. Reorderable layers and per-layer seams sound modest until they turn a compact map tool into a browser GIS project. That is future work, not an invisible promise.
 
 ## Moon
 
@@ -184,7 +188,7 @@ GitHub’s own Pages instructions cover the current settings screen: [configurin
 
 ## Future ideas, maybe
 
-Most of the old list is done now: the seam checker, video export, crop and pad, layer presets and PNG sequences. Two things are left. One is controlled blend modes. The other is an optional File System Access workflow, so a project could reopen with its original images instead of asking for them again. That one only works in Chromium-based browsers, which is why it's still a maybe.
+Most of the old list is done now: the seam checker, video export, crop and pad, layer presets and PNG sequences. Blend modes are in too. One thing is left: an optional File System Access workflow, so a project could reopen with its original images instead of asking for them again. That one only works in Chromium-based browsers, which is why it's still a maybe.
 
 What changed and when lives in [CHANGELOG.md](CHANGELOG.md).
 
