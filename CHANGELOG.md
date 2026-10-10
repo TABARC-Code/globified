@@ -4,6 +4,14 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part ten: layer presets
+
+### New
+
+- **Layer presets.** There's a list under the layers with six built-ins: Everything, Political, Physical, Weather, Night side and Bare map. You can add your own as well. A preset is the six layer opacities plus the Sunlight switch, because a night-lights preset that leaves the sun off just shows you nothing and makes you think the app's broken. Name a mix, press Save or Enter, and it's kept. The same name again updates it.
+- Presets travel in project files and the remembered settings, never with images. Loading a project merges its presets into yours and never deletes any. Built-in names are protected, so "political" can't quietly replace Political.
+- I threw junk at it on purpose: blank names, a name full of HTML, an opacity of 900, and a sun setting of `"yes"`. Blank names are rejected, the HTML shows up as plain text, 900 becomes 100, and `"yes"` is ignored.
+
 ## October 2026, part nine: the PNG you actually saw
 
 ### Fixed
