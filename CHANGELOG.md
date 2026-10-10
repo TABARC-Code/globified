@@ -4,6 +4,12 @@ Author: TABARC-Code
 
 Notes on what changed, written down so future me doesn't have to read a 700 kB diff to find out. Newest at the top.
 
+## October 2026, part seven: Tab stays put
+
+### Fixed
+
+- **Tab walked out of overlays.** With the help card, an export result or the progress card open, Tab moved focus into the panel behind, where a keyboard user couldn't see it and could change things they weren't looking at. Tab and Shift+Tab now cycle inside whichever overlay is open, and once it closes, Tab works through the panel as normal. It was left over from the review. Small, but it's the sort of thing that makes a tool quietly unusable for someone.
+
 ## October 2026, part six: a proper look round
 
 I reviewed the whole repo before adding anything else, and found three things that were simply wrong.
